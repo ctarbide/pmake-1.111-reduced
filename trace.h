@@ -41,6 +41,9 @@
  *	Definitions pertaining to the tracing of jobs in parallel mode.
  */
 
+#ifndef	_TRACE_H_
+#define	_TRACE_H_
+
 typedef enum {
 	MAKESTART,
 	MAKEEND,
@@ -54,3 +57,4 @@ void Trace_Init(const char *);
 void Trace_Log(TrEvent, Job *);
 void Trace_End(void);
 
+#endif /* _TRACE_H_ */

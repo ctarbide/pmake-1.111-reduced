@@ -79,8 +79,8 @@
  * 	which maintains hash tables.
  */
 
-#ifndef	_HASH
-#define	_HASH
+#ifndef	_HASH_H_
+#define	_HASH_H_
 
 /*
  * The following defines one entry in the hash table.
@@ -148,4 +148,4 @@ void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
 Hash_Entry *Hash_EnumFirst(Hash_Table *, Hash_Search *);
 Hash_Entry *Hash_EnumNext(Hash_Search *);
 
-#endif /* _HASH */
+#endif /* _HASH_H_ */

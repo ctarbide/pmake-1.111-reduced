@@ -487,7 +487,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     */
 	    list2->firstPtr->prevPtr = list1->lastPtr;
 	    if (list1->lastPtr != NilListNode) {
- 		list1->lastPtr->nextPtr = list2->firstPtr;
+		list1->lastPtr->nextPtr = list2->firstPtr;
 	    } else {
 		list1->firstPtr = list2->firstPtr;
 	    }

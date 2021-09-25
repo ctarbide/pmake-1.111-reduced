@@ -240,23 +240,76 @@ whole source code, which maybe useful for reference and future improvements.
 @
 
 <<pmake.c>>=
+/* this file was generated from pmake.nw, please do not edit
+ */
+
+/* begin arch.c */
 <<arch.c>>
+/* end arch.c */
+
+/* begin buf.c */
 <<buf.c>>
+/* end buf.c */
+
+/* begin compat.c */
 <<compat.c>>
+/* end compat.c */
+
+/* begin cond.c */
 <<cond.c>>
+/* end cond.c */
+
+/* begin dir.c */
 <<dir.c>>
+/* end dir.c */
+
+/* begin for.c */
 <<for.c>>
+/* end for.c */
+
+/* begin hash.c */
 <<hash.c>>
+/* end hash.c */
+
+/* begin job.c */
 <<job.c>>
-<<main.c>>
+/* end job.c */
+
+/* begin make.c */
 <<make.c>>
+/* end make.c */
+
+/* begin parse.c */
 <<parse.c>>
+/* end parse.c */
+
+/* begin str.c */
 <<str.c>>
+/* end str.c */
+
+/* begin suff.c */
 <<suff.c>>
+/* end suff.c */
+
+/* begin targ.c */
 <<targ.c>>
+/* end targ.c */
+
+/* begin trace.c */
 <<trace.c>>
+/* end trace.c */
+
+/* begin util.c */
 <<util.c>>
+/* end util.c */
+
+/* begin var.c */
 <<var.c>>
+/* end var.c */
+
+/* begin main.c */
+<<main.c>>
+/* end main.c */
 @
 
 <<bit.h>>=
@@ -332,7 +385,7 @@ extern Boolean	  Bit_Intersect();
 extern Boolean 	  Bit_Union();
 extern Boolean 	  Bit_AnySet();
 extern int  	  *Bit_Expand();
-	 
+
 #endif /* _BIT */
 @
 
@@ -570,8 +623,8 @@ ClientData Dir_CopyDir(ClientData);
  * 	which maintains hash tables.
  */
 
-#ifndef	_HASH
-#define	_HASH
+#ifndef	_HASH_H_
+#define	_HASH_H_
 
 /*
  * The following defines one entry in the hash table.
@@ -639,7 +692,7 @@ void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
 Hash_Entry *Hash_EnumFirst(Hash_Table *, Hash_Search *);
 Hash_Entry *Hash_EnumNext(Hash_Search *);
 
-#endif /* _HASH */
+#endif /* _HASH_H_ */
 @
 
 <<job.h>>=
@@ -691,7 +744,7 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
 
 /*
  * The POLL_MSEC constant determines the maximum number of milliseconds spent
- * in poll before coming out to see if a child has finished. 
+ * in poll before coming out to see if a child has finished.
  */
 #define POLL_MSEC	5000
 
@@ -820,11 +873,11 @@ typedef struct Job {
  * a case, errCheck becomes a printf template for echoing the command,
  * should echoing be on and ignErr becomes another printf template for
  * executing the command while ignoring the return status. Finally errOut
- * is a printf template for running the command and causing the shell to 
- * exit on error. If any of these strings are empty when hasErrCtl is FALSE, 
- * the command will be executed anyway as is and if it causes an error, so be 
+ * is a printf template for running the command and causing the shell to
+ * exit on error. If any of these strings are empty when hasErrCtl is FALSE,
+ * the command will be executed anyway as is and if it causes an error, so be
  * it. Any templates setup to echo the command will escape any '$ ` \ "'i
- * characters in the command string to avoid common problems with 
+ * characters in the command string to avoid common problems with
  * echo "%s\n" as a template.
  */
 typedef struct Shell {
@@ -1861,6 +1914,9 @@ typedef void *ClientData;
  *	Definitions pertaining to the tracing of jobs in parallel mode.
  */
 
+#ifndef	_TRACE_H_
+#define	_TRACE_H_
+
 typedef enum {
 	MAKESTART,
 	MAKEEND,
@@ -1874,6 +1930,7 @@ void Trace_Init(const char *);
 void Trace_Log(TrEvent, Job *);
 void Trace_End(void);
 
+#endif /* _TRACE_H_ */
 @
 
 <<arch.c>>=
@@ -3524,7 +3581,7 @@ Compat_Init(void)
     const char *cp;
 
     Shell_Init();		/* setup default shell */
-    
+
     for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++) {
 	meta[(unsigned char) *cp] = 1;
     }
@@ -3629,7 +3686,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
-    
+
     cmdNode = Lst_Member(gn->commands, (ClientData)cmd);
     cmdStart = Var_Subst(NULL, cmd, gn, FALSE);
 
@@ -3706,7 +3763,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     if (*cp != '\0') {
 	/*
 	 * If *cp isn't the null character, we hit a "meta" character and
-	 * need to pass the command off to the shell. 
+	 * need to pass the command off to the shell.
 	 */
 	static const char *shargv[4];
 
@@ -4166,7 +4223,7 @@ __RCSID("$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $");
  * All Non-Terminal functions (CondE, CondF and CondT) return Err on error.
  */
 typedef enum {
-    And, Or, Not, True, False, LParen, RParen, EndOfFile, None, Err
+    And, Or, TokenNot, True, False, LParen, RParen, EndOfFile, None, Err
 } Token;
 
 /*-
@@ -4724,7 +4781,7 @@ CondToken(Boolean doEval)
 		t = And;
 		break;
 	    case '!':
-		t = Not;
+		t = TokenNot;
 		condExpr++;
 		break;
 	    case '#':
@@ -4745,7 +4802,7 @@ CondToken(Boolean doEval)
 		rhs = NULL;
 		lhsFree = rhsFree = FALSE;
 		lhsQuoted = rhsQuoted = FALSE;
-		
+
 		/*
 		 * Parse the variable spec and skip over it, saving its
 		 * value in lhs.
@@ -4826,7 +4883,7 @@ do_string_compare:
 		     */
 		    double  	left, right;
 		    char	*cp;
-		
+
 		    if (CondCvtArg(lhs, &left))
 			goto do_string_compare;
 		    if ((cp = CondCvtArg(rhs, &right)) &&
@@ -5029,7 +5086,7 @@ error:
  *-----------------------------------------------------------------------
  * CondT --
  *	Parse a single term in the expression. This consists of a terminal
- *	symbol or Not and a terminal symbol (not including the binary
+ *	symbol or TokenNot and a terminal symbol (not including the binary
  *	operators):
  *	    T -> defined(variable) | make(target) | exists(file) | symbol
  *	    T -> ! T | ( E )
@@ -5065,7 +5122,7 @@ CondT(Boolean doEval)
 		t = Err;
 	    }
 	}
-    } else if (t == Not) {
+    } else if (t == TokenNot) {
 	t = CondT(doEval);
 	if (t == True) {
 	    t = False;
@@ -5484,7 +5541,7 @@ __RCSID("$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $");
  *	Dir_FindHereOrAbove Search for a path in the current directory and
  *			    then all the directories above it in turn until
  *			    the path is found or we reach the root ("/").
- * 
+ *
  *	Dir_MTime 	    Return the modification time of a node. The file
  *	    	  	    is searched for along the default search path.
  *	    	  	    The path and mtime fields of the node are filled
@@ -5662,7 +5719,7 @@ void
 Dir_InitCur(const char *cdname)
 {
     Path *p;
-    
+
     if (cdname != NULL) {
 	/*
 	 * Our build directory is not the same as our source directory.
@@ -5765,7 +5822,7 @@ Dir_SetPATH(void)
     Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
 
     Var_Delete(".PATH", VAR_GLOBAL);
-    
+
     if (Lst_Open(dirSearchPath) == SUCCESS) {
 	if ((ln = Lst_First(dirSearchPath)) != NILLNODE) {
 	    p = (Path *) Lst_Datum(ln);
@@ -5830,7 +5887,7 @@ DirFindName(ClientData p, ClientData dname)
  * Dir_HasWildcards  --
  *	see if the given name has any wildcard characters in it
  *	be careful not to expand unmatching brackets or braces.
- *	XXX: This code is not 100% correct. ([^]] fails etc.) 
+ *	XXX: This code is not 100% correct. ([^]] fails etc.)
  *	I really don't think that make(1) should be expanding
  *	patterns, because then you have to set a mechanism for
  *	escaping the expansion!
@@ -6232,7 +6289,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static char *
-DirLookup(Path *p, const char *name __unused, const char *cp, 
+DirLookup(Path *p, const char *name __unused, const char *cp,
           Boolean hasSlash __unused)
 {
     char *file;		/* the current filename to check */
@@ -6482,7 +6539,7 @@ Dir_FindFile(const char *name, Lst path)
 	     * is found, we concatenate the directory name and the final
 	     * component and return the resulting string. If we don't find any
 	     * such thing, we go on to phase two...
-	     * 
+	     *
 	     * No matter what, we always look for the file in the current
 	     * directory before anywhere else (unless we found the magic
 	     * DOTLAST path, in which case we search it last) and we *do not*
@@ -6693,14 +6750,14 @@ Dir_FindFile(const char *name, Lst path)
 /*-
  *-----------------------------------------------------------------------
  * Dir_FindHereOrAbove  --
- *	search for a path starting at a given directory and then working 
+ *	search for a path starting at a given directory and then working
  *	our way up towards the root.
  *
  * Input:
  *	here		starting directory
  *	search_path	the path we are looking for
  *	result		the result of a successful search is placed here
- *	rlen		the length of the result buffer 
+ *	rlen		the length of the result buffer
  *			(typically MAXPATHLEN + 1)
  *
  * Results:
@@ -6710,7 +6767,7 @@ Dir_FindFile(const char *name, Lst path)
  * Side Effects:
  *-----------------------------------------------------------------------
  */
-int 
+int
 Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 
 	struct stat st;
@@ -6735,7 +6792,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 				try_end = try + strlen(try);
 				while (try_end > try && *try_end != '/')
 					try_end--;
-				if (try_end > try) 
+				if (try_end > try)
 					*try_end = 0;	/* chop! */
 			}
 
@@ -6746,7 +6803,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 			return(1);
 		}
 
-		/* 
+		/*
 		 * nope, we didn't find it.  if we used up dirbase we've
 		 * reached the root and failed.
 		 */
@@ -6763,7 +6820,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 	} /* while (1) */
 
 	/*
-	 * we failed... 
+	 * we failed...
 	 */
 	return(0);
 }
@@ -7429,9 +7486,9 @@ For_Run(int lineno)
 	return;
 
     values = emalloc(arg.nvars * sizeof(char *));
-    
+
     while (!done) {
-	/* 
+	/*
 	 * due to the dumb way this is set up, this loop must run
 	 * backwards.
 	 */
@@ -7439,7 +7496,7 @@ For_Run(int lineno)
 	    ln = Lst_Next(arg.lst);
 	    if (ln == NILLNODE) {
 		if (i != arg.nvars-1) {
-		    Parse_Error(PARSE_FATAL, 
+		    Parse_Error(PARSE_FATAL,
 			"Not enough words in for substitution list");
 		}
 		done = 1;
@@ -7454,7 +7511,7 @@ For_Run(int lineno)
 	for (i = 0; i < arg.nvars; i++) {
 	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL, 0);
 	    if (DEBUG(FOR))
-		(void) fprintf(stderr, "--- %s = %s\n", arg.vars[i], 
+		(void) fprintf(stderr, "--- %s = %s\n", arg.vars[i],
 		    values[i]);
 	}
 
@@ -7466,7 +7523,7 @@ For_Run(int lineno)
 	 * for expanding a single variable. That should be corrected, but
 	 * not right away. (XXX)
 	 */
-	
+
 	guy = (char *) Buf_GetAll(arg.buf, &len);
 	orig_guy = guy;
 	for (i = 0; i < arg.nvars; i++) {
@@ -8079,7 +8136,7 @@ static Shell    shells[] = {
     "",
 },
     /*
-     * KSH description. 
+     * KSH description.
      */
 {
     "ksh",
@@ -8186,7 +8243,7 @@ sigset_t	caught_signals;	/* Set of signals we handle */
 #endif
 #ifndef W_EXITCODE
 #define W_EXITCODE(ret, sig) ((ret << 8) | (sig))
-#endif 
+#endif
 
 static int JobCondPassSig(ClientData, ClientData);
 static void JobPassSig(int);
@@ -8573,7 +8630,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 
     /*
      * If the shell doesn't have error control the alternate echo'ing will
-     * be done (to avoid showing additional error checking code) 
+     * be done (to avoid showing additional error checking code)
      * and this will need the characters '$ ` \ "' escaped
      */
 
@@ -8581,10 +8638,10 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	/* Worst that could happen is every char needs escaping. */
 	escCmd = emalloc((strlen(cmd) * 2) + 1);
 	for (i = 0, j= 0; cmd[i] != '\0'; i++, j++) {
-		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' || 
+		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' ||
 			cmd[i] == '"')
 			escCmd[j++] = '\\';
-		escCmd[j] = cmd[i];	
+		escCmd[j] = cmd[i];
 	}
 	escCmd[j] = 0;
     }
@@ -8656,13 +8713,13 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	}
     } else {
 
-	/* 
+	/*
 	 * If errors are being checked and the shell doesn't have error control
 	 * but does supply an errOut template, then setup commands to run
 	 * through it.
 	 */
 
-	if (!commandShell->hasErrCtl && commandShell->errOut && 
+	if (!commandShell->hasErrCtl && commandShell->errOut &&
 	    (*commandShell->errOut != '\0')) {
 		if (!(job->flags & JOB_SILENT) && !shutUp) {
 			if (commandShell->hasEchoCtl) {
@@ -8686,7 +8743,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	    DBPRINTF("set -%s\n", "x");
 	    job->flags |= JOB_TRACED;
     }
-    
+
     if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
 	    DBPRINTF("test -d %s && ", cp);
 	    DBPRINTF("cd %s\n", cp);
@@ -9031,7 +9088,7 @@ JobFinish(Job *job, int *status)
 	        (aborting == ABORT_INTERRUPT))
 		Job_TokenReturn();
 	}
-	
+
     }
 
     if (done &&
@@ -9341,9 +9398,9 @@ JobExec(Job *job, char **argv)
 		 * Pass job token pipe to submakes.
 		 */
 		fcntl(job_pipe[0], F_SETFD, 0);
-		fcntl(job_pipe[1], F_SETFD, 0);		
+		fcntl(job_pipe[1], F_SETFD, 0);
 	}
-	
+
 	if (usePipes) {
 	    /*
 	     * Set up the child's output to be routed through the pipe
@@ -11385,14 +11442,14 @@ Job_ServerStart(int maxproc)
 {
     int i, flags;
     char jobarg[64];
-    
+
     if (pipe(job_pipe) < 0)
 	Fatal("error in pipe: %s", strerror(errno));
 
     /*
      * We mark the input side of the pipe non-blocking; we poll(2) the
      * pipe when we're waiting for a job token, but we might lose the
-     * race for the token when a new one becomes available, so the read 
+     * race for the token when a new one becomes available, so the read
      * from the pipe should not block.
      */
     flags = fcntl(job_pipe[0], F_GETFL, 0);
@@ -11409,12 +11466,12 @@ Job_ServerStart(int maxproc)
     snprintf(jobarg, sizeof(jobarg), "%d,%d", job_pipe[0], job_pipe[1]);
 
     Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-    Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);			
-	
+    Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);
+
     /*
      * Preload job_pipe with one token per job, save the one
      * "extra" token for the primary job.
-     * 
+     *
      * XXX should clip maxJobs against PIPE_BUF -- if maxJobs is
      * larger than the write buffer size of the pipe, we will
      * deadlock here.
@@ -11515,7 +11572,7 @@ void
 Job_TokenFlush(void)
 {
     if (compatMake) return;
-	
+
     while (jobTokensFree > 0) {
 	JobTokenAdd();
 	jobTokensFree--;
@@ -11547,9 +11604,9 @@ emul_poll(struct pollfd *fd, int nfd, int timeout)
 	if (fd[i].fd > maxfd)
 	    maxfd = fd[i].fd;
     }
-    
+
     if (maxfd >= FD_SETSIZE) {
-	Punt("Ran out of fd_set slots; " 
+	Punt("Ran out of fd_set slots; "
 	     "recompile with a larger FD_SETSIZE.");
     }
 
@@ -11682,8 +11739,6 @@ static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
 static Lst		variables;	/* list of variables to print */
-int			maxJobs;	/* -j argument */
-static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
 Boolean			debug;		/* -d flag */
 Boolean			noExecute;	/* -n flag */
@@ -11746,11 +11801,11 @@ MainParseArgs(int argc, char **argv)
 # define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
 #endif
 #undef optarg
-#define optarg argvalue	
+#define optarg argvalue
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
-rearg:	
+rearg:
 	inOption = FALSE;
 	optscan = NULL;
 	while(argc > 1) {
@@ -11791,7 +11846,7 @@ rearg:
 				arginc = 2;
 			}
 		} else {
-			argvalue = NULL; 
+			argvalue = NULL;
 		}
 		switch(c) {
 		case '\0':
@@ -11983,7 +12038,7 @@ rearg:
 				    found_path, sizeof(found_path)))
 					break;		/* nothing doing */
 				(void) Dir_AddDir(sysIncPath, found_path);
-				
+
 			} else {
 				(void) Dir_AddDir(sysIncPath, optarg);
 			}
@@ -12169,7 +12224,7 @@ main(int argc, char **argv)
 	 */
 	gettimeofday(&rightnow, NULL);
 	srandom(rightnow.tv_sec + rightnow.tv_usec);
-	
+
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
 	else
@@ -12294,7 +12349,7 @@ main(int argc, char **argv)
 	} else {
 		(void) snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
 		if (!Main_SetObjdir(mdpath) && !Main_SetObjdir(_PATH_OBJDIR)) {
-			(void) snprintf(mdpath, MAXPATHLEN, "%s%s", 
+			(void) snprintf(mdpath, MAXPATHLEN, "%s%s",
 					_PATH_OBJDIRPREFIX, curdir);
 			(void) Main_SetObjdir(mdpath);
 		}
@@ -12366,7 +12421,7 @@ main(int argc, char **argv)
 	if (!compatMake && !forceJobs) {
 		compatMake = TRUE;
 	}
-	
+
 	/*
 	 * Initialize archive, target and suffix modules in preparation for
 	 * parsing the makefile(s)
@@ -12380,7 +12435,7 @@ main(int argc, char **argv)
 	(void)time(&now);
 
 	Trace_Log(MAKESTART, NULL);
-	
+
 	/*
 	 * Set up the .TARGETS variable to contain the list of targets to be
 	 * created. If none specified, make the variable empty -- the parser
@@ -12419,7 +12474,7 @@ main(int argc, char **argv)
 		if (strncmp(".../", start, 4) != 0) {
 			(void) Dir_AddDir(defIncPath, start);
 		} else {
-			if (Dir_FindHereOrAbove(curdir, start+4, 
+			if (Dir_FindHereOrAbove(curdir, start+4,
 			    found_path, sizeof(found_path))) {
 				(void) Dir_AddDir(defIncPath, found_path);
 			}
@@ -12454,7 +12509,7 @@ main(int argc, char **argv)
 
 		ln = Lst_Find(makefiles, (ClientData)NULL, ReadMakefile);
 		if (ln != NILLNODE)
-			Fatal("%s: cannot open %s.", progname, 
+			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	} else if (!ReadMakefile(UNCONST("makefile"), NULL))
 		(void)ReadMakefile(UNCONST("Makefile"), NULL);
@@ -12474,7 +12529,7 @@ main(int argc, char **argv)
 	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
 	Check_Cwd_av(0, NULL, 0);	/* initialize it */
-	
+
 
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
@@ -12531,7 +12586,7 @@ main(int argc, char **argv)
 		    ln = Lst_Succ(ln)) {
 			char *var = (char *)Lst_Datum(ln);
 			char *value;
-			
+
 			if (strchr(var, '$')) {
 				value = p1 = Var_Subst(NULL, var, VAR_GLOBAL, 0);
 			} else {
@@ -12635,13 +12690,13 @@ ReadMakefile(ClientData p, ClientData q __unused)
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
 			if (len < plen)
 				path = erealloc(path, len = 2 * plen);
-			
+
 			(void)snprintf(path, len, "%s/%s", curdir, fname);
 			if ((stream = fopen(path, "r")) != NULL) {
 				fname = path;
 				goto found;
 			}
-			
+
 			/* If curdir failed, try objdir (ala .depend) */
 			plen = strlen(objdir) + strlen(fname) + 2;
 			if (len < plen)
@@ -12714,13 +12769,13 @@ Check_Cwd_av(int ac, char **av, int copy)
 
     if (Check_Cwd_Off)
 	return NULL;
-    
+
     if (make[0] == NULL) {
 	if (Var_Exists("NOCHECKMAKECHDIR", VAR_GLOBAL)) {
 	    Check_Cwd_Off = 1;
 	    return NULL;
 	}
-	    
+
         make[1] = Var_Value(".MAKE", VAR_GLOBAL, &cp);
         if ((make[0] = strrchr(make[1], '/')) == NULL) {
             make[0] = make[1];
@@ -12737,7 +12792,7 @@ Check_Cwd_av(int ac, char **av, int copy)
         getenv("MAKEOBJDIRPREFIX") == NULL)
         return NULL;
 
-    
+
     next_cmd = 1;
     for (i = 0; i < ac; ++i) {
 	is_cmd = next_cmd;
@@ -12767,7 +12822,7 @@ Check_Cwd_av(int ac, char **av, int copy)
 	cp = av[i];
 	if (*cp == ';' || *cp == '&' || *cp == '|')
 	    is_cmd = 1;
-	
+
 #ifdef check_cwd_debug
 	fprintf(stderr, "av[%d] == %s '%s'",
 		i, (is_cmd) ? "cmd" : "arg", av[i]);
@@ -12817,7 +12872,7 @@ Check_Cwd_Cmd(const char *cmd)
 
     if (Check_Cwd_Off)
 	return NULL;
-    
+
     if (cmd) {
 	av = brk_string(cmd, &ac, TRUE, &bp);
 #ifdef check_cwd_debug
@@ -12842,10 +12897,10 @@ Check_Cwd(const char **argv)
 {
     char *cp;
     int ac;
-    
+
     if (Check_Cwd_Off)
 	return;
-    
+
     for (ac = 0; argv[ac] != NULL; ++ac)
 	/* NOTHING */;
     if (ac == 3 && *argv[1] == '-') {
@@ -13251,10 +13306,10 @@ void
 PrintOnError(const char *s)
 {
     char tmp[64];
-	
+
     if (s)
 	    printf("%s", s);
-	
+
     printf("\n%s: stopped in %s\n", progname, curdir);
     strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
 	    sizeof(tmp) - 1);
@@ -13273,7 +13328,7 @@ Main_ExportMAKEFLAGS(Boolean first)
     if (once != first)
 	return;
     once = 0;
-    
+
     strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
 	    sizeof(tmp));
     s = Var_Subst(NULL, tmp, VAR_CMD, 0);
@@ -13342,7 +13397,7 @@ __RCSID("$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $");
  *	Make_HandleUse	    	See if a child is a .USE node for a parent
  *				and perform the .USE actions if so.
  *
- *	Make_ExpandUse	    	Expand .USE nodes and return the new list of 
+ *	Make_ExpandUse	    	Expand .USE nodes and return the new list of
  *				targets.
  */
 
@@ -13481,7 +13536,7 @@ Make_OODate(GNode *gn)
 	 * always out of date if no children and :: target
 	 * or non-existent.
 	 */
-	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) || 
+	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) ||
 		  (gn->cmtime == 0 && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
@@ -13533,7 +13588,7 @@ Make_OODate(GNode *gn)
 	}
 	oodate = TRUE;
     } else {
-	/* 
+	/*
 	 * When a non-existing child with no sources
 	 * (such as a typically used FORCE source) has been made and
 	 * the target of the child (usually a directory) has the same
@@ -14334,7 +14389,7 @@ Make_ExpandUse(Lst targs)
 	    Lst_Concat(new, examine, LST_CONCLINK);
 	    examine = new;
 	}
-	    
+
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->flags |= REMAKE;
 	    numNodes++;
@@ -14383,7 +14438,7 @@ Make_ExpandUse(Lst targs)
     }
 
     Lst_Destroy(examine, NOFREE);
-    return ntargs; 
+    return ntargs;
 }
 
 /*-
@@ -14828,7 +14883,7 @@ ParseVErrorInternal(char *cfname, size_t clineno, int type, const char *fmt,
 			dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
 		if (dir == NULL)
 			dir = ".";
-		
+
 		(void)fprintf(stderr, "%s/%s", dir, cfname);
 	} else
 		(void)fprintf(stderr, "%s", cfname);
@@ -15067,7 +15122,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     char *cp;
     char *cp2;
     char *pref;
-    
+
     /*
      * If the target is a suffix rule, leave it alone.
      */
@@ -15086,13 +15141,13 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
 	Var_Set(PREFIX, cp, tn, 0);
 	free(cp);
     } else
-	Var_Set(PREFIX, pref, tn, 0);   
+	Var_Set(PREFIX, pref, tn, 0);
     cp = Var_Subst(NULL, ss->src, tn, FALSE);
     if (strchr(cp, '$')) {
 	Parse_Error(PARSE_WARNING, "Cannot resolve '%s' here", ss->src);
 	ParseDoSrc(ss->op, ss->src, ss->allsrc, FALSE); /* don't come back */
 	return 1;			/* stop list traversal */
-    } 
+    }
     /*
      * We don't want to make every target dependent on sources for
      * other targets.  This is the bit of ParseDoSrc which is relevant.
@@ -16714,7 +16769,7 @@ ParseEOF(int opened)
  * Side Effects:
  *---------------------------------------------------------------------
  */
-static __inline int 
+static __inline int
 ParseReadc(void)
 {
     if (curFile.F)
@@ -20475,7 +20530,7 @@ static Lst        allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
 static Lst	  allGNs;	/* List of all the GNodes */
 #endif
-static Hash_Table targets;	/* a hash table of same */
+static Hash_Table targetsSame;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
 
@@ -20504,7 +20559,7 @@ void
 Targ_Init(void)
 {
     allTargets = Lst_Init(FALSE);
-    Hash_InitTable(&targets, HTSIZE);
+    Hash_InitTable(&targetsSame, HTSIZE);
 }
 
 /*-
@@ -20526,7 +20581,7 @@ Targ_End(void)
     Lst_Destroy(allTargets, NOFREE);
     if (allGNs)
 	Lst_Destroy(allGNs, TargFreeGN);
-    Hash_DeleteTable(&targets);
+    Hash_DeleteTable(&targetsSame);
 #endif
 }
 
@@ -20675,7 +20730,7 @@ Targ_FindNode(const char *name, int flags)
 
 
     if (flags & TARG_CREATE) {
-	he = Hash_CreateEntry(&targets, name, &isNew);
+	he = Hash_CreateEntry(&targetsSame, name, &isNew);
 	if (isNew) {
 	    gn = Targ_NewGN(name);
 	    Hash_SetValue (he, gn);
@@ -20683,7 +20738,7 @@ Targ_FindNode(const char *name, int flags)
 	    (void) Lst_AtEnd(allTargets, (ClientData)gn);
 	}
     } else {
-	he = Hash_FindEntry(&targets, name);
+	he = Hash_FindEntry(&targetsSame, name);
     }
 
     if (he == (Hash_Entry *) NULL) {
@@ -21165,7 +21220,7 @@ void
 Trace_Log(TrEvent event, Job *job)
 {
 	struct timeval rightnow;
-	
+
 	if (trfile == NULL)
 		return;
 
@@ -21585,7 +21640,7 @@ size_t
 strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 {
 	static char months[][4] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 
@@ -21813,9 +21868,9 @@ typedef struct {
 typedef struct {
     GNode	*ctxt;		/* variable context */
     char	*tvar;		/* name of temp var */
-    int		tvarLen;	
+    int		tvarLen;
     char	*str;		/* string to expand */
-    int		strLen;		
+    int		strLen;
     int		err;		/* err for not defined */
 } VarLoop_t;
 
@@ -22099,7 +22154,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 {
     Var   *v;
     const char *cp = name;
-    
+
     /*
      * We only look for a variable in the given context since anything set
      * here will override anything in a lower context, so there's not much
@@ -22179,7 +22234,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	name = Var_Subst(NULL, cp, ctxt, 0);
     } else
 	name = cp;
-    
+
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == (Var *) NIL) {
@@ -22997,7 +23052,7 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *as;			    /* word list memory */
     int ac, i;
     int start, end, step;
-    
+
     buf = Buf_Init(0);
     addSpace = FALSE;
 
@@ -23813,13 +23868,13 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      * nothing.  In a target rule that would otherwise expand to an
      * empty line they can be preceded with @: to keep make happy.
      * Eg.
-     * 
+     *
      * foo:	.USE
      * .for i in ${.TARGET} ${.TARGET:R}.gz
      * 		@: ${t::=$i}
      *		@echo blah ${t:T}
      * .endfor
-     * 
+     *
      *		  ::=<str>	Assigns <str> as the new value of variable.
      *		  ::?=<str>	Assigns <str> as value of variable if
      *				it was not already set.
@@ -23872,7 +23927,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			if (VarFind(v->name, ctxt, 0) == (Var *)NIL)
 			    v_ctxt = VAR_GLOBAL;
 		    }
-			
+
 		    switch ((how = *tstr)) {
 		    case '+':
 		    case '?':
@@ -24033,7 +24088,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	        case 'P':
 		{
 		    GNode *gn;
-		    
+
 		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
 		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
@@ -24080,7 +24135,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		     * which we must free().
 		     */
 		    char *estr;
-		    
+
 		    cp = tstr+1; /* point to char after '[' */
 		    delim = ']'; /* look for closing ']' */
 		    estr = VarGetPattern(ctxt, &parsestate,
@@ -24243,7 +24298,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 				default:
 				    if (isdigit((unsigned char)tstr[3])) {
 					char *ep;
-					
+
 					parsestate.varSpace =
 						strtoul(&tstr[3], &ep, 0);
 					if (*ep != ':' && *ep != endc)
@@ -24457,7 +24512,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    free(UNCONST(pattern.rhs));
 		    delim = '\0';
 		    break;
-		}	
+		}
 		case '?':
 		{
 		    VarPattern 	pattern;
@@ -24659,7 +24714,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    goto default_case;
 #endif
                 default:
-		default_case: 
+		default_case:
 		{
 #ifdef SYSVVARSUB
 		    /*
@@ -24698,7 +24753,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 */
 			delim='=';
 			cp = tstr;
-			if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, 
+			if ((pattern.lhs = VarGetPattern(ctxt, &parsestate,
 				err, &cp, delim, &pattern.flags,
 				&pattern.leftLen, NULL)) == NULL)
 				goto cleanup;

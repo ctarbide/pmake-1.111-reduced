@@ -26,23 +26,7 @@ extract sprite.h
 extract trace.h
 
 # c source
-extract arch.c
-extract buf.c
-extract compat.c
-extract cond.c
-extract dir.c
-extract for.c
-extract hash.c
-extract job.c
-extract main.c
-extract make.c
-extract parse.c
-extract str.c
-extract suff.c
-extract targ.c
-extract trace.c
-extract util.c
-extract var.c
+extract pmake.c
 @
 
 <<extract.sh>>=
@@ -51,7 +35,7 @@ set -eux
 notangle="<<nofake or notangle>>"
 extract(){
     for i in "$@"; do
-        "${notangle}" -R"${i}" *.nw > ".tmp.${i}"
+        ${notangle} -R"${i}" *.nw > ".tmp.${i}"
         mv -f ".tmp.${i}" "${i}"
         chmod 444 "${i}"
     done
@@ -59,6 +43,14 @@ extract(){
 <<to extract>>
 @
 
-<<nofake or notangle>>=
+<<nofake>>=
 nofake
+@
+
+<<notangle>>=
+notangle -L
+@
+
+<<nofake or notangle>>=
+<<nofake>>
 @
