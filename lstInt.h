@@ -41,8 +41,8 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include	  "../make.h"
-#include	  "../lst.h"
+#include	  "make.h"
+#include	  "lst.h"
 
 typedef struct ListNode {
 	struct ListNode	*prevPtr;   /* previous element in list */

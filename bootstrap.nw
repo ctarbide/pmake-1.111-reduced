@@ -6,6 +6,10 @@ nofake -Rextract.sh *.nw | sh
 notangle -Rextract.sh *.nw | sh
 
 <<to extract>>=
+# lst library
+extract lst.c
+extract lstInt.h
+
 # headers
 extract bit.h
 extract buf.h

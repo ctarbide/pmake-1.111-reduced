@@ -8,7 +8,7 @@ The purpose of noweb in this case is, mainly, to simplify distribution and
 to selective compile only needed features while also distributing the
 whole source code, which maybe useful for reference and future improvements.
 
-<<copyright 2000>>=
+<<copyright pmake 2000>>=
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -44,7 +44,7 @@ whole source code, which maybe useful for reference and future improvements.
  * POSSIBILITY OF SUCH DAMAGE.
 @
 
-<<copyright 1993.1>>=
+<<copyright pmake 1993.1>>=
  * Copyright (c) 1988, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -76,7 +76,7 @@ whole source code, which maybe useful for reference and future improvements.
  * SUCH DAMAGE.
 @
 
-<<copyright 1993.2>>=
+<<copyright pmake 1993.2>>=
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -105,7 +105,7 @@ whole source code, which maybe useful for reference and future improvements.
  * SUCH DAMAGE.
 @
 
-<<copyright 1992>>=
+<<copyright pmake 1992>>=
  * Copyright (c) 1992, The Regents of the University of California.
  * All rights reserved.
  *
@@ -134,7 +134,7 @@ whole source code, which maybe useful for reference and future improvements.
  * SUCH DAMAGE.
 @
 
-<<copyright 1990>>=
+<<copyright pmake 1990>>=
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -166,7 +166,7 @@ whole source code, which maybe useful for reference and future improvements.
  * SUCH DAMAGE.
 @
 
-<<copyright 1989.1>>=
+<<copyright pmake 1989.1>>=
  * Copyright (c) 1988, 1989 by Adam de Boor
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
@@ -203,7 +203,7 @@ whole source code, which maybe useful for reference and future improvements.
  * SUCH DAMAGE.
 @
 
-<<copyright 1989.2>>=
+<<copyright pmake 1989.2>>=
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -263,13 +263,13 @@ whole source code, which maybe useful for reference and future improvements.
 /*	$NetBSD: bit.h,v 1.7 2003/08/07 11:14:47 agc Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
  */
@@ -340,13 +340,13 @@ extern int  	  *Bit_Expand();
 /*	$NetBSD: buf.h,v 1.10 2003/08/07 11:14:48 agc Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
  */
@@ -394,13 +394,13 @@ void Buf_ReplaceLastByte(Buffer, int);
 /*	$NetBSD: config.h,v 1.17 2004/05/07 00:04:38 ross Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
@@ -502,13 +502,13 @@ void Buf_ReplaceLastByte(Buffer, int);
 /*	$NetBSD: dir.h,v 1.11 2004/02/03 19:25:29 chuck Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
  */
@@ -553,13 +553,13 @@ ClientData Dir_CopyDir(ClientData);
 /*	$NetBSD: hash.h,v 1.8 2003/08/07 11:14:51 agc Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)hash.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)hash.h	8.1 (Berkeley) 6/6/93
  */
@@ -646,13 +646,13 @@ Hash_Entry *Hash_EnumNext(Hash_Search *);
 /*	$NetBSD: job.h,v 1.21 2003/12/20 00:18:22 jmc Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
  */
@@ -905,13 +905,13 @@ void Job_ServerStart(int);
 /*	$NetBSD: list.h,v 1.7 2003/08/07 11:14:53 agc Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  *
  *	from: @(#)list.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  *
  *	from: @(#)list.h	8.1 (Berkeley) 6/6/93
  */
@@ -1176,154 +1176,17 @@ void 	List_Move();    /* move an element elsewhere in a list */
 #endif /* _LIST */
 @
 
-<<lst.h>>=
-/*	$NetBSD: lst.h,v 1.10 2003/08/07 11:14:53 agc Exp $	*/
-
-/*
-<<copyright 1990>>
- *
- *	from: @(#)lst.h	8.1 (Berkeley) 6/6/93
- */
-
-/*
-<<copyright 1989.1>>
- *
- *	from: @(#)lst.h	8.1 (Berkeley) 6/6/93
- */
-
-/*-
- * lst.h --
- *	Header for using the list library
- */
-#ifndef _LST_H_
-#define _LST_H_
-
-#include	<sys/param.h>
-#include	<stdlib.h>
-
-#include	"sprite.h"
-
-/*
- * basic typedef. This is what the Lst_ functions handle
- */
-
-typedef	struct	Lst	*Lst;
-typedef	struct	LstNode	*LstNode;
-
-#define	NILLST		((Lst) NIL)
-#define	NILLNODE	((LstNode) NIL)
-
-/*
- * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
- *	not to be freed.
- * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
- */
-#define NOFREE		((void (*)(ClientData)) 0)
-#define NOCOPY		((ClientData (*)(ClientData)) 0)
-
-#define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
-#define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
-
-/*
- * Creation/destruction functions
- */
-/* Create a new list */
-Lst		Lst_Init(Boolean);
-/* Duplicate an existing list */
-Lst		Lst_Duplicate(Lst, ClientData (*)(ClientData));
-/* Destroy an old one */
-void		Lst_Destroy(Lst, void (*)(ClientData));
-/* True if list is empty */
-Boolean		Lst_IsEmpty(Lst);
-
-/*
- * Functions to modify a list
- */
-/* Insert an element before another */
-ReturnStatus	Lst_Insert(Lst, LstNode, ClientData);
-/* Insert an element after another */
-ReturnStatus	Lst_Append(Lst, LstNode, ClientData);
-/* Place an element at the front of a lst. */
-ReturnStatus	Lst_AtFront(Lst, ClientData);
-/* Place an element at the end of a lst. */
-ReturnStatus	Lst_AtEnd(Lst, ClientData);
-/* Remove an element */
-ReturnStatus	Lst_Remove(Lst, LstNode);
-/* Replace a node with a new value */
-ReturnStatus	Lst_Replace(LstNode, ClientData);
-/* Concatenate two lists */
-ReturnStatus	Lst_Concat(Lst, Lst, int);
-
-/*
- * Node-specific functions
- */
-/* Return first element in list */
-LstNode		Lst_First(Lst);
-/* Return last element in list */
-LstNode		Lst_Last(Lst);
-/* Return successor to given element */
-LstNode		Lst_Succ(LstNode);
-/* Get datum from LstNode */
-ClientData	Lst_Datum(LstNode);
-
-/*
- * Functions for entire lists
- */
-/* Find an element in a list */
-LstNode		Lst_Find(Lst, ClientData, int (*)(ClientData, ClientData));
-/* Find an element starting from somewhere */
-LstNode		Lst_FindFrom(Lst, LstNode, ClientData,
-			     int (*cProc)(ClientData, ClientData));
-/*
- * See if the given datum is on the list. Returns the LstNode containing
- * the datum
- */
-LstNode		Lst_Member(Lst, ClientData);
-/* Apply a function to all elements of a lst */
-void		Lst_ForEach(Lst, int (*)(ClientData, ClientData), ClientData);
-/*
- * Apply a function to all elements of a lst starting from a certain point.
- * If the list is circular, the application will wrap around to the
- * beginning of the list again.
- */
-void		Lst_ForEachFrom(Lst, LstNode, int (*)(ClientData, ClientData),
-				ClientData);
-/*
- * these functions are for dealing with a list as a table, of sorts.
- * An idea of the "current element" is kept and used by all the functions
- * between Lst_Open() and Lst_Close().
- */
-/* Open the list */
-ReturnStatus	Lst_Open(Lst);
-/* Next element please */
-LstNode		Lst_Next(Lst);
-/* Done yet? */
-Boolean		Lst_IsAtEnd(Lst);
-/* Finish table access */
-void		Lst_Close(Lst);
-
-/*
- * for using the list as a queue
- */
-/* Place an element at tail of queue */
-ReturnStatus	Lst_EnQueue(Lst, ClientData);
-/* Remove an element from head of queue */
-ClientData	Lst_DeQueue(Lst);
-
-#endif /* _LST_H_ */
-@
-
 <<make.h>>=
 /*	$NetBSd: make.h,v 1.53 2005/05/01 01:25:36 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  *
  *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  *
  *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
  */
@@ -1739,13 +1602,13 @@ Boolean Main_SetObjdir(const char *);
 /*	$NetBSD: nonints.h,v 1.34 2005/05/08 00:38:47 christos Exp $	*/
 
 /*-
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  *
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
 
 /*-
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  *
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
@@ -1874,7 +1737,7 @@ void Var_Dump(GNode *);
 /*	$NetBSD: pathnames.h,v 1.16 2005/06/24 04:33:25 lukem Exp $	*/
 
 /*
-<<copyright 1993.2>>
+<<copyright pmake 1993.2>>
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
@@ -1902,13 +1765,13 @@ void Var_Dump(GNode *);
 /*	$NetBSD: sprite.h,v 1.8 2003/08/07 11:14:57 agc Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  *
  *	from: @(#)sprite.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  *
  *	from: @(#)sprite.h	8.1 (Berkeley) 6/6/93
  */
@@ -1990,7 +1853,7 @@ typedef void *ClientData;
 /*	$NetBSD: trace.h,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $	*/
 
 /*-
-<<copyright 2000>>
+<<copyright pmake 2000>>
  */
 
 /*-
@@ -2017,11 +1880,11 @@ void Trace_End(void);
 /*	$NetBSD: arch.c,v 1.44 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -3317,11 +3180,11 @@ Arch_IsLib(GNode *gn)
 /*	$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -3594,11 +3457,11 @@ Buf_ReplaceLastByte(Buffer buf, int byte)
 /*	$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -4234,11 +4097,11 @@ Compat_Run(Lst targs)
 /*	$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -5571,11 +5434,11 @@ Cond_End(void)
 /*	$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -7266,7 +7129,7 @@ Dir_PrintPath(Lst path)
 /*	$NetBSD: for.c,v 1.18 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1992>>
+<<copyright pmake 1992>>
  */
 
 #ifndef MAKE_NATIVE
@@ -7636,11 +7499,11 @@ For_Run(int lineno)
 /*	$NetBSD: hash.c,v 1.14 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -8041,11 +7904,11 @@ RebuildTable(Hash_Table *t)
 /*	$NetBSD: job.c,v 1.95 2005/06/29 19:59:42 christos Exp $	*/
 
 /*
-<<copyright 1990>>
+<<copyright pmake 1990>>
  */
 
 /*
-<<copyright 1989.1>>
+<<copyright pmake 1989.1>>
  */
 
 #ifndef MAKE_NATIVE
@@ -11725,11 +11588,11 @@ emul_poll(struct pollfd *fd, int nfd, int timeout)
 /*	$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -13428,11 +13291,11 @@ Main_ExportMAKEFLAGS(Boolean first)
 /*	$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -14605,11 +14468,11 @@ Make_Run(Lst targs)
 /*	$NetBSD: parse.c,v 1.102 2005/06/18 14:32:04 rpaulo Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -17541,11 +17404,11 @@ ParseMark(GNode *gn)
 /*	$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $	*/
 
 /*-
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*-
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -17969,11 +17832,11 @@ Str_SYSVSubst(Buffer buf, char *pat, char *src, int len)
 /*	$NetBSD: suff.c,v 1.48 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -20538,11 +20401,11 @@ Suff_PrintAll(void)
 /*	$NetBSD: targ.c,v 1.34 2005/02/16 15:11:53 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE
@@ -21238,7 +21101,7 @@ Targ_Propagate(void)
 /*	$NetBSD: trace.c,v 1.6 2004/05/07 00:04:40 ross Exp $	*/
 
 /*-
-<<copyright 2000>>
+<<copyright pmake 2000>>
  */
 
 
@@ -21784,11 +21647,11 @@ strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 /*	$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $	*/
 
 /*
-<<copyright 1993.1>>
+<<copyright pmake 1993.1>>
  */
 
 /*
-<<copyright 1989.2>>
+<<copyright pmake 1989.2>>
  */
 
 #ifndef MAKE_NATIVE

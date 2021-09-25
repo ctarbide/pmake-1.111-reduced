@@ -23,40 +23,17 @@ CFLAGS= -DTARGET_MACHINE=\"${MACHINE}\" \
 	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
 	-DMAKE_MACHINE=\"${MACHINE}\" \
 	-DHAVE_STRERROR \
-	-DHAVE_STRDUP
+	-DHAVE_STRDUP \
+	-DMAKE_NATIVE \
+	-D'__RCSID(_)=' \
+	-D'__COPYRIGHT(_)='
 
 LIBS=
 
 OBJ=arch.o buf.o compat.o cond.o dir.o for.o hash.o job.o main.o make.o \
     parse.o str.o suff.o targ.o trace.o var.o util.o
 
-LIBOBJ= \
-    lst.lib/lstAppend.o \
-    lst.lib/lstAtEnd.o \
-    lst.lib/lstClose.o \
-    lst.lib/lstConcat.o \
-    lst.lib/lstDatum.o \
-    lst.lib/lstDeQueue.o \
-    lst.lib/lstDestroy.o \
-    lst.lib/lstFind.o \
-    lst.lib/lstFirst.o \
-    lst.lib/lstForEach.o \
-    lst.lib/lstForEachFrom.o \
-    lst.lib/lstInit.o \
-    lst.lib/lstIsAtEnd.o \
-    lst.lib/lstMember.o \
-    lst.lib/lstNext.o \
-    lst.lib/lstLast.o \
-    lst.lib/lstRemove.o \
-    lst.lib/lstFindFrom.o \
-    lst.lib/lstIsEmpty.o \
-    lst.lib/lstOpen.o \
-    lst.lib/lstAtFront.o \
-    lst.lib/lstDupl.o \
-    lst.lib/lstEnQueue.o \
-    lst.lib/lstInsert.o \
-    lst.lib/lstSucc.o \
-    lst.lib/lstReplace.o
+LIBOBJ= lst.o
 
 bmake: ${OBJ} ${LIBOBJ}
 #	@echo 'make of make and make.0 started.'
