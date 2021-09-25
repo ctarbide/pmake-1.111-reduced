@@ -7,8 +7,8 @@ notangle -Rextract.sh *.nw | sh
 
 <<to extract>>=
 # lst library
+extract lst.h
 extract lst.c
-extract lstInt.h
 
 # headers
 extract bit.h
@@ -18,7 +18,6 @@ extract dir.h
 extract hash.h
 extract job.h
 extract list.h
-extract lst.h
 extract make.h
 extract nonints.h
 extract pathnames.h

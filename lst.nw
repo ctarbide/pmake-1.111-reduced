@@ -114,6 +114,10 @@ future usage.
 /* this file was generated from lst.nw, please do not edit
  */
 
+/* begin lstInt.h */
+<<lstInt.h>>
+/* end lstInt.h */
+
 /* begin lstAppend.c */
 <<lstAppend.c>>
 /* end lstAppend.c */
@@ -356,6 +360,14 @@ ClientData	Lst_DeQueue(Lst);
 #endif /* _LST_H_ */
 @
 
+<<include list internals OFF>>=
+#include "lstInt.h"
+@
+
+<<include list internals>>=
+
+@
+
 <<lstInt.h>>=
 /*	$NetBSD: lstInt.h,v 1.11 2005/02/16 15:11:53 christos Exp $	*/
 
@@ -381,7 +393,7 @@ typedef struct ListNode {
 	short	    	useCount:8, /* Count of functions using the node.
 				     * node may not be deleted until count
 				     * goes to 0 */
- 	    	    	flags:8;    /* Node status flags */
+			flags:8;    /* Node status flags */
 	ClientData	datum;	    /* datum associated with this element */
 } *ListNode;
 /*
@@ -465,7 +477,7 @@ __RCSID("$NetBSD: lstAppend.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Add a new node with a new datum after an existing node
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -561,7 +573,7 @@ __RCSID("$NetBSD: lstAtEnd.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
  *	Add a node at the end of the list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -615,7 +627,7 @@ __RCSID("$NetBSD: lstAtFront.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
  *	Add a node at the front of the list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -671,7 +683,7 @@ __RCSID("$NetBSD: lstClose.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	used to determine when to stop.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -726,7 +738,7 @@ __RCSID("$NetBSD: lstConcat.c,v 1.12 2004/05/07 00:04:41 ross Exp $");
  *	Function to concatentate two lists.
  */
 
-#include    "lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -885,7 +897,7 @@ __RCSID("$NetBSD: lstDatum.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Return the datum associated with a list node.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -936,7 +948,7 @@ __RCSID("$NetBSD: lstDeQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
  *	Remove the node and return its datum from the head of the list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -997,7 +1009,7 @@ __RCSID("$NetBSD: lstDestroy.c,v 1.11 2004/05/07 00:04:41 ross Exp $");
  *	Nuke a list and all its resources
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1080,7 +1092,7 @@ __RCSID("$NetBSD: lstDupl.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
  *	elements.
  */
 
-#include    "lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1161,7 +1173,7 @@ __RCSID("$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
  *	Treat the list as a queue and place a datum at its end
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1213,7 +1225,7 @@ __RCSID("$NetBSD: lstFind.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
  *	Find a node on a list.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1261,7 +1273,7 @@ __RCSID("$NetBSD: lstFindFrom.c,v 1.11 2004/05/07 00:04:41 ross Exp $");
  *	Find a node on a list from a given starting point. Used by Lst_Find.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1333,7 +1345,7 @@ __RCSID("$NetBSD: lstFirst.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Return the first node of a list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1384,7 +1396,7 @@ __RCSID("$NetBSD: lstForEach.c,v 1.11 2004/05/07 00:04:41 ross Exp $");
  *	Perform a given function on all elements of a list.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1435,7 +1447,7 @@ __RCSID("$NetBSD: lstForEachFrom.c,v 1.11 2004/05/07 00:04:41 ross Exp $");
  *	a given point.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1532,7 +1544,7 @@ __RCSID("$NetBSD: lstInit.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Initialize a new linked list.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1592,7 +1604,7 @@ __RCSID("$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Insert a new datum before an old one
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1693,7 +1705,7 @@ __RCSID("$NetBSD: lstIsAtEnd.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	used to determine when to stop.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1749,7 +1761,7 @@ __RCSID("$NetBSD: lstIsEmpty.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	A single function to decide if a list is empty
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1798,7 +1810,7 @@ __RCSID("$NetBSD: lstLast.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Return the last element of a list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1849,7 +1861,7 @@ __RCSID("$NetBSD: lstMember.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	See if a given datum is on a given list.
  */
 
-#include    "lstInt.h"
+<<include list internals>>
 
 LstNode
 Lst_Member(Lst l, ClientData d)
@@ -1903,7 +1915,7 @@ __RCSID("$NetBSD: lstNext.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	used to determine when to stop.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -1996,7 +2008,7 @@ __RCSID("$NetBSD: lstOpen.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	the list forever. Lst_IsAtEnd must be used to determine when to stop.
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -2053,7 +2065,7 @@ __RCSID("$NetBSD: lstRemove.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Remove an element from a list
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -2163,7 +2175,7 @@ __RCSID("$NetBSD: lstReplace.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *	Replace the datum in a node with a new datum
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
@@ -2215,7 +2227,7 @@ __RCSID("$NetBSD: lstSucc.c,v 1.11 2004/05/07 00:04:41 ross Exp $");
  *	return the successor to a given node
  */
 
-#include	"lstInt.h"
+<<include list internals>>
 
 /*-
  *-----------------------------------------------------------------------
