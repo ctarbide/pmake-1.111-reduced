@@ -1,0 +1,60 @@
+
+nofake -Rextract.sh *.nw | sh
+
+# or
+
+notangle -Rextract.sh *.nw | sh
+
+<<to extract>>=
+# headers
+extract bit.h
+extract buf.h
+extract config.h
+extract dir.h
+extract hash.h
+extract job.h
+extract list.h
+extract lst.h
+extract make.h
+extract nonints.h
+extract pathnames.h
+extract sprite.h
+extract trace.h
+
+# c source
+extract arch.c
+extract buf.c
+extract compat.c
+extract cond.c
+extract dir.c
+extract for.c
+extract hash.c
+extract job.c
+extract main.c
+extract make.c
+extract parse.c
+extract str.c
+extract suff.c
+extract targ.c
+extract trace.c
+extract util.c
+extract var.c
+@
+
+<<extract.sh>>=
+#!/bin/sh
+set -eux
+notangle="<<nofake or notangle>>"
+extract(){
+    for i in "$@"; do
+        "${notangle}" -R"${i}" *.nw > ".tmp.${i}"
+        mv -f ".tmp.${i}" "${i}"
+        chmod 444 "${i}"
+    done
+}
+<<to extract>>
+@
+
+<<nofake or notangle>>=
+nofake
+@

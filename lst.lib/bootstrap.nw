@@ -1,0 +1,54 @@
+
+nofake -Rextract.sh *.nw | sh
+
+# or
+
+notangle -Rextract.sh *.nw | sh
+
+<<to extract>>=
+extract lstAppend.c
+extract lstAtEnd.c
+extract lstAtFront.c
+extract lstClose.c
+extract lstConcat.c
+extract lstDatum.c
+extract lstDeQueue.c
+extract lstDestroy.c
+extract lstDupl.c
+extract lstEnQueue.c
+extract lstFind.c
+extract lstFindFrom.c
+extract lstFirst.c
+extract lstForEach.c
+extract lstForEachFrom.c
+extract lstInit.c
+extract lstInsert.c
+extract lstInt.h
+extract lstIsAtEnd.c
+extract lstIsEmpty.c
+extract lstLast.c
+extract lstMember.c
+extract lstNext.c
+extract lstOpen.c
+extract lstRemove.c
+extract lstReplace.c
+extract lstSucc.c
+@
+
+<<extract.sh>>=
+#!/bin/sh
+set -eux
+notangle="<<nofake or notangle>>"
+extract(){
+    for i in "$@"; do
+        "${notangle}" -R"${i}" *.nw > ".tmp.${i}"
+        mv -f ".tmp.${i}" "${i}"
+        chmod 444 "${i}"
+    done
+}
+<<to extract>>
+@
+
+<<nofake or notangle>>=
+nofake
+@
