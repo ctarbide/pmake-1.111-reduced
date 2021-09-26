@@ -78,9 +78,8 @@
  * Common constants and type declarations for Sprite.
  */
 
-#ifndef _SPRITE
-#define _SPRITE
-
+#ifndef _SPRITE_H_
+#define _SPRITE_H_
 
 /*
  * A boolean type is defined as an integer, not an enum. This allows a
@@ -113,7 +112,6 @@ typedef int  ReturnStatus;
 #define	SUCCESS			0x00000000
 #define	FAILURE			0x00000001
 
-
 /*
  * A nil pointer must be something that will cause an exception if
  * referenced.  There are two nils: the kernels nil and the nil used
@@ -142,4 +140,4 @@ typedef char *Address;
 
 typedef void *ClientData;
 
-#endif /* _SPRITE */
+#endif /* _SPRITE_H_ */

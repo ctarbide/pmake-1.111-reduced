@@ -6,25 +6,18 @@ nofake -Rextract.sh *.nw | sh
 notangle -Rextract.sh *.nw | sh
 
 <<to extract>>=
+# headers
+extract sprite.h
+extract config.h
+
+# all prototypes
+extract pmake-protos.h
+
 # lst library
 extract lst.h
 extract lst.c
 
-# headers
-extract bit.h
-extract buf.h
-extract config.h
-extract dir.h
-extract hash.h
-extract job.h
-extract list.h
-extract make.h
-extract nonints.h
-extract pathnames.h
-extract sprite.h
-extract trace.h
-
-# c source
+# pmake program
 extract pmake.c
 @
 
@@ -47,7 +40,7 @@ nofake
 @
 
 <<notangle>>=
-notangle -L
+notangle
 @
 
 <<nofake or notangle>>=

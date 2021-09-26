@@ -1,6 +1,1235 @@
 /* this file was generated from pmake.nw, please do not edit
  */
 
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/param.h>
+#include <sys/resource.h>
+#include <sys/signal.h>
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <limits.h>
+
+#include <ar.h>
+#include <assert.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <utime.h>
+#include <signal.h>
+#include <dirent.h>
+#include <unistd.h>
+
+#include "sprite.h"
+#include "config.h"
+
+#ifdef MAKE_NATIVE
+#include <sys/utsname.h>
+#endif
+#include <sys/wait.h>
+
+#ifndef USE_SELECT
+#include <poll.h>
+#endif
+
+#ifdef USE_IOVEC
+#include <sys/uio.h>
+#endif
+
+#include "lst.h"
+
+/* begin hash.h */
+/*	$NetBSD: hash.h,v 1.8 2003/08/07 11:14:51 agc Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)hash.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*
+ * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)hash.h	8.1 (Berkeley) 6/6/93
+ */
+
+/* hash.h --
+ *
+ * 	This file contains definitions used by the hash module,
+ * 	which maintains hash tables.
+ */
+
+#ifndef	_HASH_H_
+#define	_HASH_H_
+
+/*
+ * The following defines one entry in the hash table.
+ */
+
+typedef struct Hash_Entry {
+    struct Hash_Entry *next;		/* Used to link together all the
+					 * entries associated with the same
+					 * bucket. */
+    ClientData	      clientData;	/* Arbitrary piece of data associated
+					 * with key. */
+    unsigned	      namehash;		/* hash value of key */
+    char	      name[1];		/* key string */
+} Hash_Entry;
+
+typedef struct Hash_Table {
+    struct Hash_Entry **bucketPtr;/* Pointers to Hash_Entry, one
+				 * for each bucket in the table. */
+    int 	size;		/* Actual size of array. */
+    int 	numEntries;	/* Number of entries in the table. */
+    int 	mask;		/* Used to select bits for hashing. */
+} Hash_Table;
+
+/*
+ * The following structure is used by the searching routines
+ * to record where we are in the search.
+ */
+
+typedef struct Hash_Search {
+    Hash_Table  *tablePtr;	/* Table being searched. */
+    int 	nextIndex;	/* Next bucket to check (after current). */
+    Hash_Entry 	*hashEntryPtr;	/* Next entry to check in current bucket. */
+} Hash_Search;
+
+/*
+ * Macros.
+ */
+
+/*
+ * ClientData Hash_GetValue(h)
+ *     Hash_Entry *h;
+ */
+
+#define Hash_GetValue(h) ((h)->clientData)
+
+/*
+ * Hash_SetValue(h, val);
+ *     Hash_Entry *h;
+ *     char *val;
+ */
+
+#define Hash_SetValue(h, val) ((h)->clientData = (ClientData) (val))
+
+/*
+ * Hash_Size(n) returns the number of words in an object of n bytes
+ */
+
+#define	Hash_Size(n)	(((n) + sizeof (int) - 1) / sizeof (int))
+
+#endif /* _HASH_H_ */
+/* end hash.h */
+
+/* begin buf.h */
+/*	$NetBSD: buf.h,v 1.10 2003/08/07 11:14:48 agc Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*
+ * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*-
+ * buf.h --
+ *	Header for users of the buf library.
+ */
+
+#ifndef _BUF_H
+#define _BUF_H
+
+/* <<buf.h includes>> */
+
+typedef char Byte;
+
+typedef struct Buffer {
+    int	    size; 	/* Current size of the buffer */
+    int     left;	/* Space left (== size - (inPtr - buffer)) */
+    Byte    *buffer;	/* The buffer itself */
+    Byte    *inPtr;	/* Place to write to */
+    Byte    *outPtr;	/* Place to read from */
+} *Buffer;
+
+/* Buf_AddByte adds a single byte to a buffer. */
+#define	Buf_AddByte(bp, byte) \
+	(void) (--(bp)->left <= 0 ? Buf_OvAddByte(bp, byte), 1 : \
+		(*(bp)->inPtr++ = (byte), *(bp)->inPtr = 0), 1)
+
+#define BUF_ERROR 256
+
+#endif /* _BUF_H */
+/* end buf.h */
+
+/* begin dir.h */
+/*	$NetBSD: dir.h,v 1.11 2004/02/03 19:25:29 chuck Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*
+ * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
+ */
+
+/* dir.h --
+ */
+
+#ifndef	_DIR_H_
+#define	_DIR_H_
+
+typedef struct Path {
+    char         *name;	    	/* Name of directory */
+    int	    	  refCount; 	/* Number of paths with this directory */
+    int		  hits;	    	/* the number of times a file in this
+				 * directory has been found */
+    Hash_Table    files;    	/* Hash table of files in directory */
+} Path;
+
+#endif /* _DIR_H_ */
+/* end dir.h */
+
+/* begin make.h */
+/*	$NetBSd: make.h,v 1.53 2005/05/01 01:25:36 christos Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
+ */
+
+/*
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
+ */
+
+/*-
+ * make.h --
+ *	The global definitions for pmake
+ */
+
+#ifndef _MAKE_H_
+#define _MAKE_H_
+
+/* <<make.h includes>> */
+
+#ifdef BSD4_4
+# include <sys/cdefs.h>
+#else
+# ifndef __GNUC__
+#  ifndef __inline
+#   define __inline
+#  endif
+# endif
+#endif
+
+#if !defined(__GNUC_PREREQ__)
+#if defined(__GNUC__)
+#define	__GNUC_PREREQ__(x, y)						\
+	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
+	 (__GNUC__ > (x)))
+#else /* defined(__GNUC__) */
+#define	__GNUC_PREREQ__(x, y)	0
+#endif /* defined(__GNUC__) */
+#endif /* !defined(__GNUC_PREREQ__) */
+
+#if !defined(__unused)
+#if __GNUC_PREREQ__(2, 7)
+#define __unused        __attribute__((__unused__))
+#else
+#define __unused        /* delete */
+#endif
+#endif
+
+/*-
+ * The structure for an individual graph node. Each node has several
+ * pieces of data associated with it.
+ *	1) the name of the target it describes
+ *	2) the location of the target file in the file system.
+ *	3) the type of operator used to define its sources (qv. parse.c)
+ *	4) whether it is involved in this invocation of make
+ *	5) whether the target has been remade
+ *	6) whether any of its children has been remade
+ *	7) the number of its children that are, as yet, unmade
+ *	8) its modification time
+ *	9) the modification time of its youngest child (qv. make.c)
+ *	10) a list of nodes for which this is a source
+ *	11) a list of nodes on which this depends
+ *	12) a list of nodes that depend on this, as gleaned from the
+ *	    transformation rules.
+ *	13) a list of nodes of the same name created by the :: operator
+ *	14) a list of nodes that must be made (if they're made) before
+ *	    this node can be, but that do no enter into the datedness of
+ *	    this node.
+ *	15) a list of nodes that must be made (if they're made) after
+ *	    this node is, but that do not depend on this node, in the
+ *	    normal sense.
+ *	16) a Lst of ``local'' variables that are specific to this target
+ *	   and this target only (qv. var.c [$@ $< $?, etc.])
+ *	17) a Lst of strings that are commands to be given to a shell
+ *	   to create this target.
+ */
+typedef struct GNode {
+    char            *name;     	/* The target's name */
+    char            *uname;    	/* The unexpanded name of a .USE node */
+    char    	    *path;     	/* The full pathname of the file */
+    int             type;      	/* Its type (see the OP flags, below) */
+    int		    order;	/* Its wait weight */
+
+    int             flags;
+#define REMAKE		0x1    	/* this target needs to be remade */
+#define	CHILDMADE	0x2	/* children of this target were made */
+#define FORCE		0x4	/* children don't exist, and we pretend made */
+    enum {
+	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
+	CYCLE, ENDCYCLE
+    }	    	    made;    	/* Set to reflect the state of processing
+				 * on this node:
+				 *  UNMADE - Not examined yet
+				 *  BEINGMADE - Target is already being made.
+				 *  	Indicates a cycle in the graph. (compat
+				 *  	mode only)
+				 *  MADE - Was out-of-date and has been made
+				 *  UPTODATE - Was already up-to-date
+				 *  ERROR - An error occurred while it was being
+				 *  	made (used only in compat mode)
+				 *  ABORTED - The target was aborted due to
+				 *  	an error making an inferior (compat).
+				 *  CYCLE - Marked as potentially being part of
+				 *  	a graph cycle. If we come back to a
+				 *  	node marked this way, it is printed
+				 *  	and 'made' is changed to ENDCYCLE.
+				 *  ENDCYCLE - the cycle has been completely
+				 *  	printed. Go back and unmark all its
+				 *  	members.
+				 */
+    int             unmade;    	/* The number of unmade children */
+
+    time_t          mtime;     	/* Its modification time */
+    time_t     	    cmtime;    	/* The modification time of its youngest
+				 * child */
+
+    Lst     	    iParents;  	/* Links to parents for which this is an
+				 * implied source, if any */
+    Lst	    	    cohorts;  	/* Other nodes for the :: operator */
+    Lst             parents;   	/* Nodes that depend on this one */
+    Lst             children;  	/* Nodes on which this one depends */
+    Lst	    	    successors;	/* Nodes that must be made after this one */
+    Lst	    	    preds;  	/* Nodes that must be made before this one */
+    int		    unmade_cohorts;/* # of unmade instances on the
+				      cohorts list */
+    struct GNode    *centurion;	/* Pointer to the first instance of a ::
+				   node; only set when on a cohorts list */
+
+    Hash_Table      context;	/* The local variables */
+    Lst             commands;  	/* Creation commands */
+
+    struct _Suff    *suffix;	/* Suffix for the node (determined by
+				 * Suff_FindDeps and opaque to everyone
+				 * but the Suff module) */
+    char	    *fname;	/* filename where the GNode got defined */
+    int		     lineno;	/* line number where the GNode got defined */
+} GNode;
+
+/*
+ * Manifest constants
+ */
+#define NILGNODE	((GNode *) NIL)
+
+/*
+ * The OP_ constants are used when parsing a dependency line as a way of
+ * communicating to other parts of the program the way in which a target
+ * should be made. These constants are bitwise-OR'ed together and
+ * placed in the 'type' field of each node. Any node that has
+ * a 'type' field which satisfies the OP_NOP function was never never on
+ * the lefthand side of an operator, though it may have been on the
+ * righthand side...
+ */
+#define OP_DEPENDS	0x00000001  /* Execution of commands depends on
+				     * kids (:) */
+#define OP_FORCE	0x00000002  /* Always execute commands (!) */
+#define OP_DOUBLEDEP	0x00000004  /* Execution of commands depends on kids
+				     * per line (::) */
+#define OP_OPMASK	(OP_DEPENDS|OP_FORCE|OP_DOUBLEDEP)
+
+#define OP_OPTIONAL	0x00000008  /* Don't care if the target doesn't
+				     * exist and can't be created */
+#define OP_USE		0x00000010  /* Use associated commands for parents */
+#define OP_EXEC	  	0x00000020  /* Target is never out of date, but always
+				     * execute commands anyway. Its time
+				     * doesn't matter, so it has none...sort
+				     * of */
+#define OP_IGNORE	0x00000040  /* Ignore errors when creating the node */
+#define OP_PRECIOUS	0x00000080  /* Don't remove the target when
+				     * interrupted */
+#define OP_SILENT	0x00000100  /* Don't echo commands when executed */
+#define OP_MAKE		0x00000200  /* Target is a recursive make so its
+				     * commands should always be executed when
+				     * it is out of date, regardless of the
+				     * state of the -n or -t flags */
+#define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
+				     * children was out-of-date */
+#define	OP_MADE		0x00000800  /* Assume the children of the node have
+				     * been already made */
+#define OP_SPECIAL	0x00001000  /* Special .BEGIN, .END, .INTERRUPT */
+#define	OP_USEBEFORE	0x00002000  /* Like .USE, only prepend commands */
+#define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
+				     * I.e. it doesn't show up in the parents's
+				     * local variables. */
+#define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
+				     * target' processing in parse.c */
+#define OP_PHONY	0x00010000  /* Not a file target; run always */
+#define OP_NOPATH	0x00020000  /* Don't search for file in the path */
+/* Attributes applied by PMake */
+#define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
+#define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
+#define OP_LIB	  	0x20000000  /* Target is a library */
+#define OP_ARCHV  	0x10000000  /* Target is an archive construct */
+#define OP_HAS_COMMANDS	0x08000000  /* Target has all the commands it should.
+				     * Used when parsing to catch multiple
+				     * commands for a target */
+#define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
+#define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
+#define	OP_MARK		0x01000000  /* Node found while expanding .ALLSRC */
+
+#define NoExecute(gn) ((gn->type & OP_MAKE) ? noRecursiveExecute : noExecute)
+/*
+ * OP_NOP will return TRUE if the node with the given type was not the
+ * object of a dependency operator
+ */
+#define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
+
+#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
+
+/*
+ * The TARG_ constants are used when calling the Targ_FindNode and
+ * Targ_FindList functions in targ.c. They simply tell the functions what to
+ * do if the desired node(s) is (are) not found. If the TARG_CREATE constant
+ * is given, a new, empty node will be created for the target, placed in the
+ * table of all targets and its address returned. If TARG_NOCREATE is given,
+ * a NIL pointer will be returned.
+ */
+#define TARG_CREATE	0x01	  /* create node if not found */
+#define TARG_NOCREATE	0x00	  /* don't create it */
+
+/*
+ * There are several places where expandable buffers are used (parse.c and
+ * var.c). This constant is merely the starting point for those buffers. If
+ * lines tend to be much shorter than this, it would be best to reduce BSIZE.
+ * If longer, it should be increased. Reducing it will cause more copying to
+ * be done for longer lines, but will save space for shorter ones. In any
+ * case, it ought to be a power of two simply because most storage allocation
+ * schemes allocate in powers of two.
+ */
+#define MAKE_BSIZE		256	/* starting size for expandable buffers */
+
+/*
+ * These constants are all used by the Str_Concat function to decide how the
+ * final string should look. If STR_ADDSPACE is given, a space will be
+ * placed between the two strings. If STR_ADDSLASH is given, a '/' will
+ * be used instead of a space. If neither is given, no intervening characters
+ * will be placed between the two strings in the final output. If the
+ * STR_DOFREE bit is set, the two input strings will be freed before
+ * Str_Concat returns.
+ */
+#define STR_ADDSPACE	0x01	/* add a space when Str_Concat'ing */
+#define STR_ADDSLASH	0x02	/* add a slash when Str_Concat'ing */
+
+/*
+ * Error levels for parsing. PARSE_FATAL means the process cannot continue
+ * once the makefile has been parsed. PARSE_WARNING means it can. Passed
+ * as the first argument to Parse_Error.
+ */
+#define PARSE_WARNING	2
+#define PARSE_FATAL	1
+
+/*
+ * Values returned by Cond_Eval.
+ */
+#define COND_PARSE	0   	/* Parse the next lines */
+#define COND_SKIP 	1   	/* Skip the next lines */
+#define COND_INVALID	2   	/* Not a conditional statement */
+
+/*
+ * Definitions for the "local" variables. Used only for clarity.
+ */
+#define TARGET	  	  "@" 	/* Target of dependency */
+#define OODATE	  	  "?" 	/* All out-of-date sources */
+#define ALLSRC	  	  ">" 	/* All sources */
+#define IMPSRC	  	  "<" 	/* Source implied by transformation */
+#define PREFIX	  	  "*" 	/* Common prefix */
+#define ARCHIVE	  	  "!" 	/* Archive in "archive(member)" syntax */
+#define MEMBER	  	  "%" 	/* Member in "archive(member)" syntax */
+
+#define FTARGET           "@F"  /* file part of TARGET */
+#define DTARGET           "@D"  /* directory part of TARGET */
+#define FIMPSRC           "<F"  /* file part of IMPSRC */
+#define DIMPSRC           "<D"  /* directory part of IMPSRC */
+#define FPREFIX           "*F"  /* file part of PREFIX */
+#define DPREFIX           "*D"  /* directory part of PREFIX */
+
+/*
+ * Global Variables
+ */
+extern Lst  	create;	    	/* The list of target names specified on the
+				 * command line. used to resolve #if
+				 * make(...) statements */
+extern Lst     	dirSearchPath; 	/* The list of directories to search when
+				 * looking for targets */
+
+extern Boolean	compatMake;	/* True if we are make compatible */
+extern Boolean	ignoreErrors;  	/* True if should ignore all errors */
+extern Boolean  beSilent;    	/* True if should print no commands */
+extern Boolean  noExecute;    	/* True if should execute nothing */
+extern Boolean  noRecursiveExecute;    	/* True if should execute nothing */
+extern Boolean  allPrecious;   	/* True if every target is precious */
+extern Boolean  keepgoing;    	/* True if should continue on unaffected
+				 * portions of the graph when have an error
+				 * in one portion */
+extern Boolean 	touchFlag;    	/* TRUE if targets should just be 'touched'
+				 * if out of date. Set by the -t flag */
+extern Boolean  usePipes;    	/* TRUE if should capture the output of
+				 * subshells by means of pipes. Otherwise it
+				 * is routed to temporary files from which it
+				 * is retrieved when the shell exits */
+extern Boolean 	queryFlag;    	/* TRUE if we aren't supposed to really make
+				 * anything, just see if the targets are out-
+				 * of-date */
+
+extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
+				 * variables before the global context */
+extern Boolean	jobServer;	/* a jobServer already exists */
+
+extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
+				 * treated as errors */
+
+extern Boolean	varNoExportEnv;	/* TRUE if we should not export variables
+				 * set on the command line to the env. */
+
+extern GNode    *DEFAULT;    	/* .DEFAULT rule */
+
+extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
+				 * in the Makefile itself */
+extern GNode    *VAR_CMD;    	/* Variables defined on the command line */
+extern GNode	*VAR_FOR;	/* Iteration variables */
+extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
+				 * is encountered. It actually points to
+				 * an empty string, so naive callers needn't
+				 * worry about it. */
+
+extern time_t 	now;	    	/* The time at the start of this whole
+				 * process */
+
+extern Boolean	oldVars;    	/* Do old-style variable substitution */
+
+extern Lst	sysIncPath;	/* The system include path. */
+extern Lst	defIncPath;	/* The default include path. */
+
+extern char	*progname;	/* The program name */
+
+#define	MAKEFLAGS	".MAKEFLAGS"
+#define	MAKEOVERRIDES	".MAKEOVERRIDES"
+
+/*
+ * debug control:
+ *	There is one bit per module.  It is up to the module what debug
+ *	information to print.
+ */
+extern int debug;
+#define	DEBUG_ARCH	0x0001
+#define	DEBUG_COND	0x0002
+#define	DEBUG_DIR	0x0004
+#define	DEBUG_GRAPH1	0x0008
+#define	DEBUG_GRAPH2	0x0010
+#define	DEBUG_JOB	0x0020
+#define	DEBUG_MAKE	0x0040
+#define	DEBUG_SUFF	0x0080
+#define	DEBUG_TARG	0x0100
+#define	DEBUG_VAR	0x0200
+#define DEBUG_FOR	0x0400
+#define DEBUG_SHELL	0x0800
+#define DEBUG_ERROR	0x1000
+#define	DEBUG_GRAPH3	0x10000
+#define DEBUG_SCRIPT	0x20000
+
+#define CONCAT(a,b)	a##b
+
+#define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
+
+#ifdef __GNUC__
+#define UNCONST(ptr)	({ 		\
+    union __unconst {			\
+	const void *__cp;		\
+	void *__p;			\
+    } __d;				\
+    __d.__cp = ptr, __d.__p; })
+#else
+#define UNCONST(ptr)	(void *)(ptr)
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? a : b)
+#endif
+#ifndef MAX
+#define MAX(a, b) ((a > b) ? a : b)
+#endif
+
+#endif /* _MAKE_H_ */
+/* end make.h */
+
+/* begin job.h */
+/*	$NetBSD: job.h,v 1.21 2003/12/20 00:18:22 jmc Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*
+ * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Adam de Boor.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
+ */
+
+/*-
+ * job.h --
+ *	Definitions pertaining to the running of jobs in parallel mode.
+ *	Exported from job.c for the use of remote-execution modules.
+ */
+#ifndef _JOB_H_
+#define _JOB_H_
+
+#define TMPPAT	"/tmp/makeXXXXXX"
+
+#ifdef USE_SELECT
+/*
+ * Emulate poll() in terms of select().  This is not a complete
+ * emulation but it is sufficient for make's purposes.
+ */
+
+#define poll emul_poll
+#define pollfd emul_pollfd
+
+struct emul_pollfd {
+    int fd;
+    short events;
+    short revents;
+};
+
+#define	POLLIN		0x0001
+#define	POLLOUT		0x0004
+
+int
+emul_poll(struct pollfd *fd, int nfd, int timeout);
+#endif
+
+/*
+ * The POLL_MSEC constant determines the maximum number of milliseconds spent
+ * in poll before coming out to see if a child has finished.
+ */
+#define POLL_MSEC	5000
+
+
+/*-
+ * Job Table definitions.
+ *
+ * Each job has several things associated with it:
+ *	1) The process id of the child shell
+ *	2) The graph node describing the target being made by this job
+ *	3) A LstNode for the first command to be saved after the job
+ *	   completes. This is NILLNODE if there was no "..." in the job's
+ *	   commands.
+ *	4) An FILE* for writing out the commands. This is only
+ *	   used before the job is actually started.
+ *	5) A union of things used for handling the shell's output. Different
+ *	   parts of the union are used based on the value of the usePipes
+ *	   flag. If it is true, the output is being caught via a pipe and
+ *	   the descriptors of our pipe, an array in which output is line
+ *	   buffered and the current position in that buffer are all
+ *	   maintained for each job. If, on the other hand, usePipes is false,
+ *	   the output is routed to a temporary file and all that is kept
+ *	   is the name of the file and the descriptor open to the file.
+ *	6) An identifier provided by and for the exclusive use of the
+ *	   Rmt module.
+ *	7) A word of flags which determine how the module handles errors,
+ *	   echoing, etc. for the job
+ *
+ * The job "table" is kept as a linked Lst in 'jobs', with the number of
+ * active jobs maintained in the 'nJobs' variable. At no time will this
+ * exceed the value of 'maxJobs', initialized by the Job_Init function.
+ *
+ * When a job is finished, the Make_Update function is called on each of the
+ * parents of the node which was just remade. This takes care of the upward
+ * traversal of the dependency graph.
+ */
+
+#define JOB_BUFSIZE	1024
+typedef struct Job {
+    int       	pid;	    /* The child's process ID */
+    GNode    	*node;      /* The target the child is making */
+    LstNode 	tailCmds;   /* The node of the first command to be
+			     * saved when the job has been run */
+    FILE 	*cmdFILE;   /* When creating the shell script, this is
+			     * where the commands go */
+    int    	rmtID;     /* ID returned from Rmt module */
+    short      	flags;	    /* Flags to control treatment of job */
+#define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
+#define	JOB_SILENT	0x002	/* no output */
+#define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
+				 * if we can't export it and maxLocal is 0 */
+#define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
+				 * commands */
+#define JOB_REMOTE	0x010	/* Job is running remotely */
+#define JOB_FIRST	0x020	/* Job is first job for the node */
+#define JOB_REMIGRATE	0x040	/* Job needs to be remigrated */
+#define JOB_RESTART	0x080	/* Job needs to be completely restarted */
+#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
+				 * for some reason */
+#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
+				 * Used to avoid infinite recursion between
+				 * JobFinish and JobRestart */
+#define JOB_TRACED	0x400	/* we've sent 'set -x' */
+
+    union {
+	struct {
+	    int	  	op_inPipe;	/* Input side of pipe associated
+					 * with job's output channel */
+	    struct pollfd *op_inPollfd;	/* pollfd associated with inPipe */
+	    int   	op_outPipe;	/* Output side of pipe associated with
+					 * job's output channel */
+	    char  	op_outBuf[JOB_BUFSIZE + 1];
+					/* Buffer for storing the output of the
+					 * job, line by line */
+	    int   	op_curPos;	/* Current position in op_outBuf */
+	}   	    o_pipe;	    /* data used when catching the output via
+				     * a pipe */
+	struct {
+	    char  	of_outFile[sizeof(TMPPAT)+2];
+					/* Name of file to which shell output
+					 * was rerouted */
+	    int	    	of_outFd;	/* Stream open to the output
+					 * file. Used to funnel all
+					 * from a single job to one file
+					 * while still allowing
+					 * multiple shell invocations */
+	}   	    o_file;	    /* Data used when catching the output in
+				     * a temporary file */
+    }       	output;	    /* Data for tracking a shell's output */
+} Job;
+
+#define outPipe	  	output.o_pipe.op_outPipe
+#define inPipe	  	output.o_pipe.op_inPipe
+#define inPollfd	output.o_pipe.op_inPollfd
+#define outBuf		output.o_pipe.op_outBuf
+#define curPos		output.o_pipe.op_curPos
+#define outFile		output.o_file.of_outFile
+#define outFd	  	output.o_file.of_outFd
+
+
+/*-
+ * Shell Specifications:
+ * Each shell type has associated with it the following information:
+ *	1) The string which must match the last character of the shell name
+ *	   for the shell to be considered of this type. The longest match
+ *	   wins.
+ *	2) A command to issue to turn off echoing of command lines
+ *	3) A command to issue to turn echoing back on again
+ *	4) What the shell prints, and its length, when given the echo-off
+ *	   command. This line will not be printed when received from the shell
+ *	5) A boolean to tell if the shell has the ability to control
+ *	   error checking for individual commands.
+ *	6) The string to turn this checking on.
+ *	7) The string to turn it off.
+ *	8) The command-flag to give to cause the shell to start echoing
+ *	   commands right away.
+ *	9) The command-flag to cause the shell to Lib_Exit when an error is
+ *	   detected in one of the commands.
+ *
+ * Some special stuff goes on if a shell doesn't have error control. In such
+ * a case, errCheck becomes a printf template for echoing the command,
+ * should echoing be on and ignErr becomes another printf template for
+ * executing the command while ignoring the return status. Finally errOut
+ * is a printf template for running the command and causing the shell to
+ * exit on error. If any of these strings are empty when hasErrCtl is FALSE,
+ * the command will be executed anyway as is and if it causes an error, so be
+ * it. Any templates setup to echo the command will escape any '$ ` \ "'i
+ * characters in the command string to avoid common problems with
+ * echo "%s\n" as a template.
+ */
+typedef struct Shell {
+    const char	 *name;		/* the name of the shell. For Bourne and C
+				 * shells, this is used only to find the
+				 * shell description when used as the single
+				 * source of a .SHELL target. For user-defined
+				 * shells, this is the full path of the shell.
+				 */
+    Boolean 	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
+    const char   *echoOff;	/* command to turn off echo */
+    const char   *echoOn;	/* command to turn it back on again */
+    const char   *noPrint;	/* command to skip when printing output from
+				 * shell. This is usually the command which
+				 * was executed to turn off echoing */
+    int           noPLen;	/* length of noPrint command */
+    Boolean	  hasErrCtl;	/* set if can control error checking for
+				 * individual commands */
+    const char	 *errCheck;	/* string to turn error checking on */
+    const char	 *ignErr;	/* string to turn off error checking */
+    const char	 *errOut;	/* string to use for testing exit code */
+    char   commentChar;		/* character used by shell for comment lines */
+
+    /*
+     * command-line flags
+     */
+    const char   *echo;		/* echo commands */
+    const char   *exit;		/* exit on error */
+}               Shell;
+
+extern const char *shellPath;
+extern const char *shellName;
+
+extern int	job_pipe[2];	/* token pipe for jobs. */
+extern int	jobTokensRunning; /* tokens currently "out" */
+extern int	jobTokensFree;	/* tokens free but not yet released to pipe */
+
+#endif /* _JOB_H_ */
+/* end job.h */
+
+/* begin trace.h */
+/*	$NetBSD: trace.h,v 1.1 2000/12/29 23:11:08 sommerfeld Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Bill Sommerfeld
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*-
+ * trace.h --
+ *	Definitions pertaining to the tracing of jobs in parallel mode.
+ */
+
+#ifndef	_TRACE_H_
+#define	_TRACE_H_
+
+typedef enum {
+	MAKESTART,
+	MAKEEND,
+	MAKEERROR,
+	JOBSTART,
+	JOBEND,
+	MAKEINTR,
+} TrEvent;
+
+#endif /* _TRACE_H_ */
+/* end trace.h */
+
+/* begin pathnames.h */
+/*	$NetBSD: pathnames.h,v 1.16 2005/06/24 04:33:25 lukem Exp $	*/
+
+/*
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
+ */
+
+#ifndef MAKE_NATIVE
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+#else
+#include <paths.h>
+#endif
+
+#define	_PATH_OBJDIR		"obj"
+#define	_PATH_OBJDIRPREFIX	"/usr/obj"
+#ifndef _PATH_DEFSHELLDIR
+#define	_PATH_DEFSHELLDIR	"/bin"
+#endif
+#ifndef _PATH_DEFSYSPATH
+#define	_PATH_DEFSYSPATH	"/usr/share/mk"
+#endif
+/* end pathnames.h */
+
+#include "pmake-protos.h"
+
 /* begin arch.c */
 /*	$NetBSD: arch.c,v 1.44 2005/02/16 15:11:52 christos Exp $	*/
 
@@ -133,31 +1362,7 @@ __RCSID("$NetBSD: arch.c,v 1.44 2005/02/16 15:11:52 christos Exp $");
  *	Arch_End 	    	Cleanup this module.
  */
 
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/time.h>
-#include    <sys/param.h>
-
-#include    <ar.h>
-#include    <ctype.h>
-#include    <fcntl.h>
-#include    <stdio.h>
-#include    <stdlib.h>
-#include    <utime.h>
-
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "config.h"
-
-#ifdef TARGET_MACHINE
-#undef MAKE_MACHINE
-#define MAKE_MACHINE TARGET_MACHINE
-#endif
-#ifdef TARGET_MACHINE_ARCH
-#undef MAKE_MACHINE_ARCH
-#define MAKE_MACHINE_ARCH TARGET_MACHINE_ARCH
-#endif
+/* <<arch.c includes>> */
 
 static Lst	  archives;   /* Lst of archives we've already examined */
 
@@ -1451,9 +2656,7 @@ __RCSID("$NetBSD: buf.c,v 1.16 2005/02/16 15:11:52 christos Exp $");
  *	Functions for automatically-expanded buffers.
  */
 
-#include    "sprite.h"
-#include    "make.h"
-#include    "buf.h"
+/* <<buf.c includes>> */
 
 #ifndef max
 #define max(a,b)  ((a) > (b) ? (a) : (b))
@@ -1797,20 +3000,7 @@ __RCSID("$NetBSD: compat.c,v 1.58 2005/05/08 04:19:12 christos Exp $");
  *	    	  	    thems as need creatin'
  */
 
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/wait.h>
-
-#include    <ctype.h>
-#include    <errno.h>
-#include    <signal.h>
-#include    <stdio.h>
-
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "job.h"
-#include    "pathnames.h"
+/* <<compat.c includes>> */
 
 /*
  * The following array is used to make a fast determination of which
@@ -2494,12 +3684,7 @@ __RCSID("$NetBSD: cond.c,v 1.27 2005/06/02 02:03:19 lukem Exp $");
  *
  */
 
-#include    <ctype.h>
-
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "buf.h"
+/* <<cond.c includes>> */
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -3936,16 +5121,7 @@ __RCSID("$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $");
  *	Dir_PrintDirectories	Print stats about the directory cache.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <dirent.h>
-#include <errno.h>
-#include <stdio.h>
-
-#include "make.h"
-#include "hash.h"
-#include "dir.h"
+/* <<dir.c includes>> */
 
 /*
  *	A search path consists of a Lst of Path structures. A Path structure
@@ -5609,13 +6785,7 @@ __RCSID("$NetBSD: for.c,v 1.18 2005/02/16 15:11:52 christos Exp $");
  *
  */
 
-#include    <assert.h>
-#include    <ctype.h>
-
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "buf.h"
+/* <<for.c includes>> */
 
 /*
  * For statements are of the form:
@@ -6041,9 +7211,8 @@ __RCSID("$NetBSD: hash.c,v 1.14 2005/02/16 15:11:52 christos Exp $");
  * 	table.  Hash tables grow automatically as the amount of
  * 	information increases.
  */
-#include "sprite.h"
-#include "make.h"
-#include "hash.h"
+
+/* <<hash.c includes>> */
 
 /*
  * Forward references to local procedures that are used before they're
@@ -6556,36 +7725,7 @@ __RCSID("$NetBSD: job.c,v 1.95 2005/06/29 19:59:42 christos Exp $");
  *	Job_Wait  	    	Wait for all currently-running jobs to finish.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#ifndef RMT_WILL_WATCH
-#ifndef USE_SELECT
-#include <poll.h>
-#endif
-#endif
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <utime.h>
-
-#include "make.h"
-#include "hash.h"
-#include "dir.h"
-#include "job.h"
-#include "pathnames.h"
-#include "trace.h"
-#ifdef REMOTE
-#include "rmt.h"
-# define STATIC
-#else
-# define STATIC static
-#endif
+/* <<job.c includes>> */
 
 /*
  * error handling variables
@@ -6687,16 +7827,15 @@ static const char *shellArgv = NULL;		  /* Custom shell args */
 
 static int  	maxJobs;    	/* The most children we can run at once */
 static int  	maxLocal;    	/* The most local ones we can have */
-STATIC int     	nJobs;	    	/* The number of children currently running */
-STATIC int	nLocal;    	/* The number of local children */
-STATIC Lst     	jobs;		/* The structures that describe them */
+static int     	nJobs;	    	/* The number of children currently running */
+static int	nLocal;    	/* The number of local children */
+static Lst     	jobs;		/* The structures that describe them */
 static Boolean	wantToken;	/* we want a token */
 
 /*
  * Set of descriptors of pipes connected to
  * the output channels of children
  */
-#ifndef RMT_WILL_WATCH
 static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
 static int nfds = 0;
@@ -6706,11 +7845,10 @@ static void clearfd(Job *);
 static int readyfd(Job *);
 #define JBSTART 256
 #define JBFACTOR 2
-#endif
 
-STATIC GNode   	*lastNode;	/* The node for which output was most recently
+static GNode   	*lastNode;	/* The node for which output was most recently
 				 * produced. */
-STATIC const char *targFmt;   	/* Format string to use to head output from a
+static const char *targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
 static Job tokenWaitJob;	/* token wait pseudo-job */
@@ -6719,15 +7857,9 @@ int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
 static Job childExitJob;	/* child exit pseudo-job */
 int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 
-#ifdef REMOTE
-# define TARG_FMT  "--- %s at %s ---\n" /* Default format */
-# define MESSAGE(fp, gn) \
-	(void) fprintf(fp, targFmt, gn->name, gn->rem.hname)
-#else
 # define TARG_FMT  "--- %s ---\n" /* Default format */
 # define MESSAGE(fp, gn) \
 	(void) fprintf(fp, targFmt, gn->name)
-#endif
 
 /*
  * When JobStart attempts to run a job remotely but can't, and isn't allowed
@@ -6735,7 +7867,7 @@ int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
  * been migrated home, the job is placed on the stoppedJobs queue to be run
  * when the next job finishes.
  */
-STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
+static Lst	stoppedJobs;	/* Lst of Job structures describing
 				 * jobs that were stopped due to concurrency
 				 * limits or migration home */
 
@@ -6774,15 +7906,8 @@ static int JobCmpPid(ClientData, ClientData);
 static int JobPrintCommand(ClientData, ClientData);
 static int JobSaveCommand(ClientData, ClientData);
 static void JobClose(Job *);
-#ifdef REMOTE
-static int JobCmpRmtID(ClientData, ClientData);
-# ifdef RMT_WILL_WATCH
-static void JobLocalInput(int, Job *);
-# endif
-#else
 static void JobFinish(Job *, int *);
 static void JobExec(Job *, char **);
-#endif
 static void JobMakeArgv(Job *, char **);
 static int JobRestart(Job *);
 static int JobStart(GNode *, int, Job *);
@@ -6840,13 +7965,6 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 {
     Job	*job = (Job *) jobp;
     int	signo = *(int *) signop;
-#ifdef RMT_WANTS_SIGNALS
-    if (job->flags & JOB_REMOTE) {
-	(void) Rmt_Signal(job, signo);
-    } else {
-	KILL(job->pid, signo);
-    }
-#else
     /*
      * Assume that sending the signal to job->pid will signal any remote
      * job as well.
@@ -6858,7 +7976,6 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 	(void) fflush(stdout);
     }
     KILL(job->pid, signo);
-#endif
     return 0;
 }
 
@@ -7017,31 +8134,6 @@ JobCmpPid(ClientData job, ClientData pid)
 {
     return *(int *) pid - ((Job *) job)->pid;
 }
-
-#ifdef REMOTE
-/*-
- *-----------------------------------------------------------------------
- * JobCmpRmtID  --
- *	Compare the rmtID of the job with the given rmtID and return 0 if they
- *	are equal.
- *
- * Input:
- *	job		job to examine
- *	rmtID		remote id desired
- *
- * Results:
- *	0 if the rmtID's match
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
- */
-static int
-JobCmpRmtID(ClientData job, ClientData rmtID)
-{
-    return(*(int *) rmtID - ((Job *) job)->rmtID);
-}
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -7334,11 +8426,7 @@ static void
 JobClose(Job *job)
 {
     if (usePipes && (job->flags & JOB_FIRST)) {
-#ifdef RMT_WILL_WATCH
-	Rmt_Ignore(job->inPipe);
-#else
 	clearfd(job);
-#endif
 	if (job->outPipe != job->inPipe) {
 	   (void) close(job->outPipe);
 	}
@@ -7394,19 +8482,12 @@ JobFinish(Job *job, int *status)
 	 * cases, finish out the job's output before printing the exit
 	 * status...
 	 */
-#ifdef REMOTE
-	KILL(job->pid, SIGCONT);
-#endif
 	JobClose(job);
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 	   (void) fclose(job->cmdFILE);
 	   job->cmdFILE = NULL;
 	}
 	done = TRUE;
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE)
-	    Rmt_Done(job->rmtID, job->node);
-#endif
     } else if (WIFEXITED(*status)) {
 	/*
 	 * Deal with ignored errors in -B mode. We need to print a message
@@ -7423,10 +8504,6 @@ JobFinish(Job *job, int *status)
 	 * stuff?
 	 */
 	JobClose(job);
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE)
-	    Rmt_Done(job->rmtID, job->node);
-#endif /* REMOTE */
     } else {
 	/*
 	 * No need to close things down or anything.
@@ -7507,10 +8584,6 @@ JobFinish(Job *job, int *status)
 	    }
 	    job->flags |= JOB_RESUME;
 	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
-#ifdef REMOTE
-	    if (job->flags & JOB_REMIGRATE)
-		JobRestart(job);
-#endif
 	    (void) fflush(out);
 	    return;
 	} else if (WIFSTOPPED(*status) &&  WSTOPSIG(*status) == SIGCONT) {
@@ -7800,31 +8873,6 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
     }
     return TRUE;
 }
-#ifdef RMT_WILL_WATCH
-/*-
- *-----------------------------------------------------------------------
- * JobLocalInput --
- *	Handle a pipe becoming readable. Callback function for Rmt_Watch
- *
- * Input:
- *	stream		Stream that's ready (ignored)
- *	job		Job to which the stream belongs
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	JobDoOutput is called.
- *
- *-----------------------------------------------------------------------
- */
-/*ARGSUSED*/
-static void
-JobLocalInput(int stream, Job *job)
-{
-    JobDoOutput(job, FALSE);
-}
-#endif /* RMT_WILL_WATCH */
 
 /*-
  *-----------------------------------------------------------------------
@@ -7876,12 +8924,6 @@ JobExec(Job *job, char **argv)
 	MESSAGE(stdout, job->node);
 	lastNode = job->node;
     }
-
-#ifdef RMT_NO_EXEC
-    if (job->flags & JOB_REMOTE) {
-	goto jobExecFinish;
-    }
-#endif /* RMT_NO_EXEC */
 
     /* No interruptions until this job is on the `jobs' list */
     JobSigLock(&mask);
@@ -7965,15 +9007,8 @@ JobExec(Job *job, char **argv)
 # endif
 #endif /* USE_PGRP */
 
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE) {
-	    Rmt_Exec(shellPath, argv, FALSE);
-	} else
-#endif /* REMOTE */
-	{
-	   (void) execv(shellPath, argv);
-	   execError("exec", shellPath);
-	}
+	(void) execv(shellPath, argv);
+	execError("exec", shellPath);
 	_exit(1);
     } else {
 	job->pid = cpid;
@@ -7987,20 +9022,11 @@ JobExec(Job *job, char **argv)
 	     * stream to watch in the outputs mask
 	     */
 	    job->curPos = 0;
-
-#ifdef RMT_WILL_WATCH
-	    Rmt_Watch(job->inPipe, JobLocalInput, job);
-#else
 	    watchfd(job);
-#endif /* RMT_WILL_WATCH */
 	}
 
 	if (job->flags & JOB_REMOTE) {
-#ifndef REMOTE
 	    job->rmtID = 0;
-#else
-	    job->rmtID = Rmt_LastID(job->pid);
-#endif /* REMOTE */
 	} else {
 	    nLocal += 1;
 	    /*
@@ -8013,9 +9039,6 @@ JobExec(Job *job, char **argv)
 	}
     }
 
-#ifdef RMT_NO_EXEC
-jobExecFinish:
-#endif
     /*
      * Now the job is actually running, add it to the table.
      */
@@ -8097,28 +9120,14 @@ JobMakeArgv(Job *job, char **argv)
 static int
 JobRestart(Job *job)
 {
-#ifdef REMOTE
-    int host;
-#endif
-
     if (job->flags & JOB_REMIGRATE) {
 	if (
-#ifdef REMOTE
-	    verboseRemigrates ||
-#endif
 	    DEBUG(JOB)) {
 	   (void) fprintf(stdout, "*** remigrating %x(%s)\n",
 			   job->pid, job->node->name);
 	   (void) fflush(stdout);
 	}
 
-#ifdef REMOTE
-	if (!Rmt_ReExport(job->pid, job->node, &host)) {
-	    if (verboseRemigrates || DEBUG(JOB)) {
-		(void) fprintf(stdout, "*** couldn't migrate...\n");
-		(void) fflush(stdout);
-	    }
-#endif
 	    if (nLocal != maxLocal) {
 		/*
 		 * Job cannot be remigrated, but there's room on the local
@@ -8126,30 +9135,19 @@ JobRestart(Job *job)
 		 * local job has started.
 		 */
 		if (
-#ifdef REMOTE
-		    verboseRemigrates ||
-#endif
 		    DEBUG(JOB)) {
 		    (void) fprintf(stdout, "*** resuming on local machine\n");
 		    (void) fflush(stdout);
 		}
 		KILL(job->pid, SIGCONT);
 		nLocal +=1;
-#ifdef REMOTE
-		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME|JOB_REMOTE);
-		job->flags |= JOB_CONTINUING;
-#else
 		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
-#endif
 	    } else {
 		/*
 		 * Job cannot be restarted. Mark the table as full and
 		 * place the job back on the list of stopped jobs.
 		 */
 		if (
-#ifdef REMOTE
-		    verboseRemigrates ||
-#endif
 		    DEBUG(JOB)) {
 		   (void) fprintf(stdout, "*** holding\n");
 		   (void) fflush(stdout);
@@ -8157,18 +9155,6 @@ JobRestart(Job *job)
 		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
 		return 1;
 	    }
-#ifdef REMOTE
-	} else {
-	    /*
-	     * Clear out the remigrate and resume flags. Set the continuing
-	     * flag so we know later on that the process isn't exiting just
-	     * because of a signal.
-	     */
-	    job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
-	    job->flags |= JOB_CONTINUING;
-	    job->rmtID = host;
-	}
-#endif
 
 	(void)Lst_AtEnd(jobs, (ClientData)job);
 	nJobs += 1;
@@ -8189,16 +9175,6 @@ JobRestart(Job *job)
 	    (void) fprintf(stdout, "Restarting %s...", job->node->name);
 	    (void) fflush(stdout);
 	}
-#ifdef REMOTE
-	if ((job->node->type & OP_NOEXPORT) ||
- 	    (nLocal < maxLocal && runLocalFirst)
-# ifdef RMT_NO_EXEC
-	    || !Rmt_Export(shellPath, argv, job)
-# else
-	    || !Rmt_Begin(shellPath, argv, job->node)
-# endif
-	   )
-#endif
 	{
 	    if (((nLocal >= maxLocal) && !(job->flags & JOB_SPECIAL))) {
 		/*
@@ -8222,18 +9198,6 @@ JobRestart(Job *job)
 		job->flags &= ~JOB_REMOTE;
 	    }
 	}
-#ifdef REMOTE
-	else {
-	    /*
-	     * Can be exported. Hooray!
-	     */
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "exporting\n");
-		(void) fflush(stdout);
-	    }
-	    job->flags |= JOB_REMOTE;
-	}
-#endif
 	JobExec(job, argv);
     } else {
 	/*
@@ -8249,9 +9213,6 @@ JobRestart(Job *job)
 	     (nLocal < maxLocal) ||
 	     ((maxLocal == 0) &&
 		((job->flags & JOB_SPECIAL)
-#ifdef REMOTE
-			&& (job->node->type & OP_NOEXPORT)
-#endif
 	    ))))
 	{
 	    /*
@@ -8264,12 +9225,7 @@ JobRestart(Job *job)
 	    Boolean error;
 	    int status;
 
-#ifdef RMT_WANTS_SIGNALS
-	    if (job->flags & JOB_REMOTE) {
-		error = !Rmt_Signal(job, SIGCONT);
-	    } else
-#endif	/* RMT_WANTS_SIGNALS */
-		error = (KILL(job->pid, SIGCONT) != 0);
+	    error = (KILL(job->pid, SIGCONT) != 0);
 
 	    if (!error) {
 		/*
@@ -8379,9 +9335,8 @@ JobStart(GNode *gn, int flags, Job *previous)
 	cmdsOK = TRUE;
     }
 
-#ifndef RMT_WILL_WATCH
     job->inPollfd = NULL;
-#endif
+
     /*
      * If the -n flag wasn't given, we open up OUR (not the child's)
      * temporary file to stuff commands in it. The thing is rd/wr so we don't
@@ -8585,27 +9540,11 @@ JobStart(GNode *gn, int flags, Job *previous)
 	}
     }
 
-#ifdef REMOTE
-    if (!(gn->type & OP_NOEXPORT) && !(runLocalFirst && nLocal < maxLocal)) {
-#ifdef RMT_NO_EXEC
-	local = !Rmt_Export(shellPath, argv, job);
-#else
-	local = !Rmt_Begin(shellPath, argv, job->node);
-#endif /* RMT_NO_EXEC */
-	if (!local) {
-	    job->flags |= JOB_REMOTE;
-	}
-    } else
-#endif
-	local = TRUE;
+    local = TRUE;
 
     if (local && (((nLocal >= maxLocal) &&
 	!(job->flags & JOB_SPECIAL) &&
-#ifdef REMOTE
-	(!(gn->type & OP_NOEXPORT) || (maxLocal != 0))
-#else
 	(maxLocal != 0)
-#endif
 	)))
     {
 	/*
@@ -8700,7 +9639,7 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
  *	curPos may be shifted as may the contents of outBuf.
  *-----------------------------------------------------------------------
  */
-STATIC void
+static void
 JobDoOutput(Job *job, Boolean finish)
 {
     Boolean       gotNL = FALSE;  /* true if got a newline */
@@ -8892,9 +9831,7 @@ JobRun(GNode *targ)
     JobStart(targ, JOB_SPECIAL, (Job *)0);
     while (nJobs) {
 	Job_CatchOutput();
-#ifndef RMT_WILL_WATCH
 	Job_CatchChildren(!usePipes);
-#endif /* RMT_WILL_WATCH */
     }
 #else
     Compat_Make(targ, targ);
@@ -8969,18 +9906,7 @@ Job_CatchChildren(Boolean block)
 	    job = (Job *) Lst_Datum(jnode);
 	    (void) Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
-#ifdef REMOTE
-	    if (!(job->flags & JOB_REMOTE)) {
-		if (DEBUG(JOB)) {
-		    (void) fprintf(stdout,
-			   "Job queue has one fewer local process.\n");
-		    (void) fflush(stdout);
-		}
-		nLocal -= 1;
-	    }
-#else
 	    nLocal -= 1;
-#endif
 	}
 
 	JobFinish(job, &status);
@@ -9009,35 +9935,8 @@ Job_CatchOutput(void)
     int           	  nready;
     LstNode		  ln;
     Job  	 	  *job;
-#ifdef RMT_WILL_WATCH
-    int	    	  	  pnJobs;   	/* Previous nJobs */
-#endif
-
     (void) fflush(stdout);
     Job_TokenFlush();
-#ifdef RMT_WILL_WATCH
-    pnJobs = nJobs;
-
-    /*
-     * It is possible for us to be called with nJobs equal to 0. This happens
-     * if all the jobs finish and a job that is stopped cannot be run
-     * locally (eg if maxLocal is 0) and cannot be exported. The job will
-     * be placed back on the stoppedJobs queue, Job_Empty() will return false,
-     * Make_Run will call us again when there's nothing for which to wait.
-     * nJobs never changes, so we loop forever. Hence the check. It could
-     * be argued that we should sleep for a bit so as not to swamp the
-     * exportation system with requests. Perhaps we should.
-     *
-     * NOTE: IT IS THE RESPONSIBILITY OF Rmt_Wait TO CALL Job_CatchChildren
-     * IN A TIMELY FASHION TO CATCH ANY LOCALLY RUNNING JOBS THAT EXIT.
-     * It may use the variable nLocal to determine if it needs to call
-     * Job_CatchChildren(if nLocal is 0, there's nothing for which to
-     * wait...)
-     */
-    while (nJobs != 0 && pnJobs == nJobs) {
-	Rmt_Wait();
-    }
-#else
     if (usePipes) {
 	if ((nready = poll((wantToken ? fds : (fds + 1)),
 	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0) {
@@ -9066,7 +9965,6 @@ Job_CatchOutput(void)
 	    JobSigUnlock(&mask);
 	}
     }
-#endif /* RMT_WILL_WATCH */
 }
 
 /*-
@@ -9148,9 +10046,6 @@ Job_Init(int maxproc, int maxlocal)
     lastNode =	  NILGNODE;
 
     if (maxJobs == 1
-#ifdef REMOTE
-	|| noMessages
-#endif
 		     ) {
 	/*
 	 * If only one job can run at a time, there's no need for a banner,
@@ -9198,7 +10093,7 @@ Job_Init(int maxproc, int maxlocal)
      * we're giving each job its own process group (since then it won't get
      * signals from the terminal driver as we own the terminal)
      */
-#if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
+#if defined(USE_PGRP)
     ADDSIG(SIGTSTP, JobPassSig)
     ADDSIG(SIGTTOU, JobPassSig)
     ADDSIG(SIGTTIN, JobPassSig)
@@ -9230,7 +10125,7 @@ static void JobSigReset(void)
     DELSIG(SIGHUP)
     DELSIG(SIGQUIT)
     DELSIG(SIGTERM)
-#if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
+#if defined(USE_PGRP)
     DELSIG(SIGTSTP)
     DELSIG(SIGTTOU)
     DELSIG(SIGTTIN)
@@ -9531,26 +10426,6 @@ JobInterrupt(int runINTERRUPT, int signo)
 		Error("*** %s removed", file);
 	    }
 	}
-#ifdef RMT_WANTS_SIGNALS
-	if (job->flags & JOB_REMOTE) {
-	    /*
-	     * If job is remote, let the Rmt module do the killing.
-	     */
-	    if (!Rmt_Signal(job, signo)) {
-		/*
-		 * If couldn't kill the thing, finish it out now with an
-		 * error code, since no exit report will come in likely.
-		 */
-		int status;
-
-		status.w_status = 0;
-		status.w_retcode = 1;
-		JobFinish(job, &status);
-	    }
-	} else if (job->pid) {
-	    KILL(job->pid, signo);
-	}
-#else
 	if (job->pid) {
 	    if (DEBUG(JOB)) {
 		(void) fprintf(stdout,
@@ -9560,71 +10435,8 @@ JobInterrupt(int runINTERRUPT, int signo)
 	    }
 	    KILL(job->pid, signo);
 	}
-#endif /* RMT_WANTS_SIGNALS */
     }
     Lst_Close(jobs);
-
-#ifdef REMOTE
-   (void)Lst_Open(stoppedJobs);
-    while ((ln = Lst_Next(stoppedJobs)) != NILLNODE) {
-	GNode *gn;
-
-	job = (Job *) Lst_Datum(ln);
-	gn = job->node;
-
-	if (job->flags & JOB_RESTART) {
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "%s%s",
-			       "JobInterrupt skipping job on stopped queue",
-			       "-- it was waiting to be restarted.\n");
-		(void) fflush(stdout);
-	    }
-	    continue;
-	}
-	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
-	    char *file = (gn->path == NULL ? gn->name : gn->path);
-	    if (eunlink(file) == 0) {
-		Error("*** %s removed", file);
-	    }
-	}
-	/*
-	 * Resume the thing so it will take the signal.
-	 */
-	if (DEBUG(JOB)) {
-	    (void) fprintf(stdout,
-			   "JobInterrupt passing CONT to stopped child %d.\n",
-			   job->pid);
-	    (void) fflush(stdout);
-	}
-	KILL(job->pid, SIGCONT);
-#ifdef RMT_WANTS_SIGNALS
-	if (job->flags & JOB_REMOTE) {
-	    /*
-	     * If job is remote, let the Rmt module do the killing.
-	     */
-	    if (!Rmt_Signal(job, SIGINT)) {
-		/*
-		 * If couldn't kill the thing, finish it out now with an
-		 * error code, since no exit report will come in likely.
-		 */
-		int status;
-		status.w_status = 0;
-		status.w_retcode = 1;
-		JobFinish(job, &status);
-	    }
-	} else if (job->pid) {
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout,
-		       "JobInterrupt passing interrupt to stopped child %d.\n",
-			       job->pid);
-		(void) fflush(stdout);
-	    }
-	    KILL(job->pid, SIGINT);
-	}
-#endif /* RMT_WANTS_SIGNALS */
-    }
-    Lst_Close(stoppedJobs);
-#endif /* REMOTE */
 
     JobSigUnlock(&mask);
 
@@ -9707,9 +10519,7 @@ Job_Wait(void)
     aborting = ABORT_WAIT;
     while (nJobs != 0) {
 	Job_CatchOutput();
-#ifndef RMT_WILL_WATCH
 	Job_CatchChildren(!usePipes);
-#endif /* RMT_WILL_WATCH */
     }
     Job_TokenFlush();
     aborting = 0;
@@ -9750,18 +10560,8 @@ Job_AbortAll(void)
 	     * kill the child process with increasingly drastic signals to make
 	     * darn sure it's dead.
 	     */
-#ifdef RMT_WANTS_SIGNALS
-	    if (job->flags & JOB_REMOTE) {
-		Rmt_Signal(job, SIGINT);
-		Rmt_Signal(job, SIGKILL);
-	    } else {
-		KILL(job->pid, SIGINT);
-		KILL(job->pid, SIGKILL);
-	    }
-#else
 	    KILL(job->pid, SIGINT);
 	    KILL(job->pid, SIGKILL);
-#endif /* RMT_WANTS_SIGNALS */
 	}
 	Lst_Close(jobs);
 	JobSigUnlock(&mask);
@@ -9774,60 +10574,6 @@ Job_AbortAll(void)
 	continue;
 }
 
-#ifdef REMOTE
-/*-
- *-----------------------------------------------------------------------
- * JobFlagForMigration --
- *	Handle the eviction of a child. Called from RmtStatusChange.
- *	Flags the child as remigratable and then suspends it.
- *
- * Input:
- *	hostID		ID of host we used, for matching children
- *
- * Results:
- *	none.
- *
- * Side Effects:
- *	The job descriptor is flagged for remigration.
- *
- *-----------------------------------------------------------------------
- */
-void
-JobFlagForMigration(int hostID)
-{
-    Job		  *job;	    	/* job descriptor for dead child */
-    LstNode       jnode;    	/* list element for finding job */
-
-    if (DEBUG(JOB)) {
-	(void) fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
-	(void) fflush(stdout);
-    }
-    jnode = Lst_Find(jobs, (ClientData)&hostID, JobCmpRmtID);
-
-    if (jnode == NILLNODE) {
-	jnode = Lst_Find(stoppedJobs, (ClientData)hostID, JobCmpRmtID);
-		if (jnode == NILLNODE) {
-		    if (DEBUG(JOB)) {
-			Error("Evicting host(%d) not in table", hostID);
-		    }
-		    return;
-		}
-    }
-    job = (Job *) Lst_Datum(jnode);
-
-    if (DEBUG(JOB)) {
-	(void) fprintf(stdout,
-		       "JobFlagForMigration(%d) found job '%s'.\n", hostID,
-		       job->node->name);
-	(void) fflush(stdout);
-    }
-
-    KILL(job->pid, SIGSTOP);
-
-    job->flags |= JOB_REMIGRATE;
-}
-
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -9861,7 +10607,6 @@ JobRestartJobs(void)
     JobSigUnlock(&mask);
 }
 
-#ifndef RMT_WILL_WATCH
 static void
 watchfd(Job *job)
 {
@@ -9925,7 +10670,6 @@ readyfd(Job *job)
 	Punt("Polling unwatched job");
     return (job->inPollfd->revents & POLLIN) != 0;
 }
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -10279,10 +11023,7 @@ __RCSID("$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $");
  *				targets.
  */
 
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "job.h"
+/* <<make.c includes>> */
 
 static Lst     	toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by
@@ -10385,7 +11126,7 @@ Make_OODate(GNode *gn)
      * A target is remade in one of the following circumstances:
      *	its modification time is smaller than that of its youngest child
      *	    and it would actually be run (has commands or type OP_NOP)
-     *	it's the object of a force operator
+     *	it's the object of a force operator (!)
      *	it has no children, was on the lhs of an operator and doesn't exist
      *	    already.
      *
@@ -11523,17 +12264,7 @@ __RCSID("$NetBSD: parse.c,v 1.102 2005/06/18 14:32:04 rpaulo Exp $");
  *	Parse_MainName	    	    Returns a Lst of the main target to create.
  */
 
-#include <ctype.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "make.h"
-#include "hash.h"
-#include "dir.h"
-#include "job.h"
-#include "buf.h"
-#include "pathnames.h"
+/* <<parse.c includes>> */
 
 /*
  * These values are returned by ParseEOF to tell Parse_File whether to
@@ -14477,7 +15208,7 @@ __RCSID("$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $");
 #endif				/* not lint */
 #endif
 
-#include "make.h"
+/* <<str.c includes>> */
 
 /*-
  * str_concat --
@@ -15019,10 +15750,7 @@ __RCSID("$NetBSD: suff.c,v 1.48 2005/02/16 15:11:52 christos Exp $");
  *				order to find the node.
  */
 
-#include    	  <stdio.h>
-#include	  "make.h"
-#include	  "hash.h"
-#include	  "dir.h"
+/* <<suff.c includes>> */
 
 static Lst       sufflist;	/* Lst of suffixes */
 #ifdef CLEANUP
@@ -17637,12 +18365,7 @@ __RCSID("$NetBSD: targ.c,v 1.34 2005/02/16 15:11:53 christos Exp $");
  *	    	  	    	print something for suffixes, too, but...
  */
 
-#include	  <stdio.h>
-#include	  <time.h>
-
-#include	  "make.h"
-#include	  "hash.h"
-#include	  "dir.h"
+/* <<targ.c includes>> */
 
 static Lst        allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -18332,14 +19055,7 @@ __RCSID("$NetBSD: trace.c,v 1.6 2004/05/07 00:04:40 ross Exp $");
  *	Trace_Log		Log an event about a particular make job.
  */
 
-#include <sys/time.h>
-
-#include <stdio.h>
-#include <unistd.h>
-
-#include "make.h"
-#include "job.h"
-#include "trace.h"
+/* <<trace.c includes>> */
 
 static FILE *trfile;
 static pid_t trpid;
@@ -18395,458 +19111,6 @@ Trace_End(void)
 		fclose(trfile);
 }
 /* end trace.c */
-
-/* begin util.c */
-/*	$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $	*/
-
-/*
- * Missing stuff from OS's
- */
-
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: util.c,v 1.36 2005/02/16 15:11:53 christos Exp $");
-#endif
-#endif
-
-#include <sys/param.h>
-
-#include <errno.h>
-#include <stdio.h>
-#include <time.h>
-
-#include "make.h"
-
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
-extern int errno, sys_nerr;
-extern char *sys_errlist[];
-
-char *
-strerror(int e)
-{
-    static char buf[100];
-    if (e < 0 || e >= sys_nerr) {
-	snprintf(buf, sizeof(buf), "Unknown error %d", e);
-	return buf;
-    }
-    else
-	return sys_errlist[e];
-}
-#endif
-
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRDUP)
-#include <string.h>
-
-/* strdup
- *
- * Make a duplicate of a string.
- * For systems which lack this function.
- */
-char *
-strdup(const char *str)
-{
-    size_t len;
-    char *p;
-
-    if (str == NULL)
-	return NULL;
-    len = strlen(str) + 1;
-    p = emalloc(len);
-
-    return memcpy(p, str, len);
-}
-#endif
-
-#if !defined(MAKE_NATIVE) && !defined(HAVE_SETENV)
-int
-setenv(const char *name, const char *value, int dum)
-{
-    char *p;
-    int len = strlen(name) + strlen(value) + 2; /* = \0 */
-    char *ptr = emalloc(len);
-
-    (void) dum;
-
-    if (ptr == NULL)
-	return -1;
-
-    p = ptr;
-
-    while (*name)
-	*p++ = *name++;
-
-    *p++ = '=';
-
-    while (*value)
-	*p++ = *value++;
-
-    *p = '\0';
-
-    len = putenv(ptr);
-/*    free(ptr); */
-    return len;
-}
-#endif
-
-#if defined(__hpux__) || defined(__hpux)
-/* strrcpy():
- *	Like strcpy, going backwards and returning the new pointer
- */
-static char *
-strrcpy(char *ptr, char *str)
-{
-    int len = strlen(str);
-
-    while (len)
-	*--ptr = str[--len];
-
-    return (ptr);
-} /* end strrcpy */
-
-char    *sys_siglist[] = {
-        "Signal 0",
-        "Hangup",                       /* SIGHUP    */
-        "Interrupt",                    /* SIGINT    */
-        "Quit",                         /* SIGQUIT   */
-        "Illegal instruction",          /* SIGILL    */
-        "Trace/BPT trap",               /* SIGTRAP   */
-        "IOT trap",                     /* SIGIOT    */
-        "EMT trap",                     /* SIGEMT    */
-        "Floating point exception",     /* SIGFPE    */
-        "Killed",                       /* SIGKILL   */
-        "Bus error",                    /* SIGBUS    */
-        "Segmentation fault",           /* SIGSEGV   */
-        "Bad system call",              /* SIGSYS    */
-        "Broken pipe",                  /* SIGPIPE   */
-        "Alarm clock",                  /* SIGALRM   */
-        "Terminated",                   /* SIGTERM   */
-        "User defined signal 1",        /* SIGUSR1   */
-        "User defined signal 2",        /* SIGUSR2   */
-        "Child exited",                 /* SIGCLD    */
-        "Power-fail restart",           /* SIGPWR    */
-        "Virtual timer expired",        /* SIGVTALRM */
-        "Profiling timer expired",      /* SIGPROF   */
-        "I/O possible",                 /* SIGIO     */
-        "Window size changes",          /* SIGWINDOW */
-        "Stopped (signal)",             /* SIGSTOP   */
-        "Stopped",                      /* SIGTSTP   */
-        "Continued",                    /* SIGCONT   */
-        "Stopped (tty input)",          /* SIGTTIN   */
-        "Stopped (tty output)",         /* SIGTTOU   */
-        "Urgent I/O condition",         /* SIGURG    */
-        "Remote lock lost (NFS)",       /* SIGLOST   */
-        "Signal 31",                    /* reserved  */
-        "DIL signal"                    /* SIGDIL    */
-};
-#endif /* __hpux__ || __hpux */
-
-#if defined(__hpux__) || defined(__hpux)
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/syscall.h>
-#include <sys/signal.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <dirent.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
-
-int
-killpg(int pid, int sig)
-{
-    return kill(-pid, sig);
-}
-
-#if !defined(__hpux__) && !defined(__hpux)
-void
-srandom(long seed)
-{
-    srand48(seed);
-}
-
-long
-random(void)
-{
-    return lrand48();
-}
-#endif
-
-/* turn into bsd signals */
-void (*
-signal(int s, void (*a)(int)))(int)
-{
-    struct sigvec osv, sv;
-
-    (void) sigvector(s, (struct sigvec *) 0, &osv);
-    sv = osv;
-    sv.sv_handler = a;
-#ifdef SV_BSDSIG
-    sv.sv_flags = SV_BSDSIG;
-#endif
-
-    if (sigvector(s, &sv, (struct sigvec *) 0) == -1)
-        return (BADSIG);
-    return (osv.sv_handler);
-}
-
-#if !defined(__hpux__) && !defined(__hpux)
-int
-utimes(char *file, struct timeval tvp[2])
-{
-    struct utimbuf t;
-
-    t.actime  = tvp[0].tv_sec;
-    t.modtime = tvp[1].tv_sec;
-    return(utime(file, &t));
-}
-#endif
-
-#if !defined(BSD) && !defined(d_fileno)
-# define d_fileno d_ino
-#endif
-
-#ifndef DEV_DEV_COMPARE
-# define DEV_DEV_COMPARE(a, b) ((a) == (b))
-#endif
-#define ISDOT(c) ((c)[0] == '.' && (((c)[1] == '\0') || ((c)[1] == '/')))
-#define ISDOTDOT(c) ((c)[0] == '.' && ISDOT(&((c)[1])))
-
-char *
-getwd(char *pathname)
-{
-    DIR    *dp;
-    struct dirent *d;
-    extern int errno;
-
-    struct stat st_root, st_cur, st_next, st_dotdot;
-    char    pathbuf[MAXPATHLEN], nextpathbuf[MAXPATHLEN * 2];
-    char   *pathptr, *nextpathptr, *cur_name_add;
-
-    /* find the inode of root */
-    if (stat("/", &st_root) == -1) {
-	(void) sprintf(pathname,
-			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
-	return (NULL);
-    }
-    pathbuf[MAXPATHLEN - 1] = '\0';
-    pathptr = &pathbuf[MAXPATHLEN - 1];
-    nextpathbuf[MAXPATHLEN - 1] = '\0';
-    cur_name_add = nextpathptr = &nextpathbuf[MAXPATHLEN - 1];
-
-    /* find the inode of the current directory */
-    if (lstat(".", &st_cur) == -1) {
-	(void) sprintf(pathname,
-			"getwd: Cannot stat \".\" (%s)", strerror(errno));
-	return (NULL);
-    }
-    nextpathptr = strrcpy(nextpathptr, "../");
-
-    /* Descend to root */
-    for (;;) {
-
-	/* look if we found root yet */
-	if (st_cur.st_ino == st_root.st_ino &&
-	    DEV_DEV_COMPARE(st_cur.st_dev, st_root.st_dev)) {
-	    (void) strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
-	    return (pathname);
-	}
-
-	/* open the parent directory */
-	if (stat(nextpathptr, &st_dotdot) == -1) {
-	    (void) sprintf(pathname,
-			    "getwd: Cannot stat directory \"%s\" (%s)",
-			    nextpathptr, strerror(errno));
-	    return (NULL);
-	}
-	if ((dp = opendir(nextpathptr)) == NULL) {
-	    (void) sprintf(pathname,
-			    "getwd: Cannot open directory \"%s\" (%s)",
-			    nextpathptr, strerror(errno));
-	    return (NULL);
-	}
-
-	/* look in the parent for the entry with the same inode */
-	if (DEV_DEV_COMPARE(st_dotdot.st_dev, st_cur.st_dev)) {
-	    /* Parent has same device. No need to stat every member */
-	    for (d = readdir(dp); d != NULL; d = readdir(dp))
-		if (d->d_fileno == st_cur.st_ino)
-		    break;
-	}
-	else {
-	    /*
-	     * Parent has a different device. This is a mount point so we
-	     * need to stat every member
-	     */
-	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
-		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
-		    continue;
-		(void) strcpy(cur_name_add, d->d_name);
-		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void) sprintf(pathname,
-			"getwd: Cannot stat \"%s\" (%s)",
-			d->d_name, strerror(errno));
-		    (void) closedir(dp);
-		    return (NULL);
-		}
-		/* check if we found it yet */
-		if (st_next.st_ino == st_cur.st_ino &&
-		    DEV_DEV_COMPARE(st_next.st_dev, st_cur.st_dev))
-		    break;
-	    }
-	}
-	if (d == NULL) {
-	    (void) sprintf(pathname,
-		"getwd: Cannot find \".\" in \"..\"");
-	    (void) closedir(dp);
-	    return (NULL);
-	}
-	st_cur = st_dotdot;
-	pathptr = strrcpy(pathptr, d->d_name);
-	pathptr = strrcpy(pathptr, "/");
-	nextpathptr = strrcpy(nextpathptr, "../");
-	(void) closedir(dp);
-	*cur_name_add = '\0';
-    }
-} /* end getwd */
-#endif /* __hpux */
-
-#if defined(sun) && defined(__svr4__)
-#include <signal.h>
-
-/* turn into bsd signals */
-void (*
-signal(int s, void (*a)(int)))(int)
-{
-    struct sigaction sa, osa;
-
-    sa.sa_handler = a;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-
-    if (sigaction(s, &sa, &osa) == -1)
-	return SIG_ERR;
-    else
-	return osa.sa_handler;
-}
-#endif
-
-#if !defined(MAKE_NATIVE) && !defined(HAVE_VSNPRINTF)
-#include <stdarg.h>
-
-#if !defined(__osf__)
-#ifdef _IOSTRG
-#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
-#else
-#if 0
-#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
-#endif
-#endif /* _IOSTRG */
-#endif /* __osf__ */
-
-int
-vsnprintf(char *s, size_t n, const char *fmt, va_list args)
-{
-#ifdef STRFLAG
-	FILE fakebuf;
-
-	fakebuf._flag = STRFLAG;
-	/*
-	 * Some os's are char * _ptr, others are unsigned char *_ptr...
-	 * We cast to void * to make everyone happy.
-	 */
-	fakebuf._ptr = (void *) s;
-	fakebuf._cnt = n-1;
-	fakebuf._file = -1;
-	_doprnt(fmt, args, &fakebuf);
-	fakebuf._cnt++;
-	putc('\0', &fakebuf);
-	if (fakebuf._cnt<0)
-	    fakebuf._cnt = 0;
-	return (n-fakebuf._cnt-1);
-#else
-	(void) vsprintf(s, fmt, args);
-	return strlen(s);
-#endif
-}
-
-int
-snprintf(char *s, size_t n, const char *fmt, ...)
-{
-	va_list ap;
-	int rv;
-
-	va_start(ap, fmt);
-	rv = vsnprintf(s, n, fmt, ap);
-	va_end(ap);
-	return rv;
-}
-
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRFTIME)
-size_t
-strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
-{
-	static char months[][4] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
-
-	size_t s;
-	char *b = buf;
-
-	while (*fmt) {
-		if (len == 0)
-			return buf - b;
-		if (*fmt != '%') {
-			*buf++ = *fmt++;
-			len--;
-			continue;
-		}
-		switch (*fmt++) {
-		case '%':
-			*buf++ = '%';
-			len--;
-			if (len == 0) return buf - b;
-			/*FALLTHROUGH*/
-		case '\0':
-			*buf = '%';
-			s = 1;
-			break;
-		case 'k':
-			s = snprintf(buf, len, "%d", tm->tm_hour);
-			break;
-		case 'M':
-			s = snprintf(buf, len, "%02d", tm->tm_min);
-			break;
-		case 'S':
-			s = snprintf(buf, len, "%02d", tm->tm_sec);
-			break;
-		case 'b':
-			if (tm->tm_mon >= 12)
-				return buf - b;
-			s = snprintf(buf, len, "%s", months[tm->tm_mon]);
-			break;
-		case 'd':
-			s = snprintf(buf, len, "%s", tm->tm_mday);
-			break;
-		case 'Y':
-			s = snprintf(buf, len, "%s", 1900 + tm->tm_year);
-			break;
-		default:
-			s = snprintf(buf, len, "Unsupported format %c",
-			    fmt[-1]);
-			break;
-		}
-		buf += s;
-		len -= s;
-	}
-}
-#endif
-#endif
-/* end util.c */
 
 /* begin var.c */
 /*	$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $	*/
@@ -18974,16 +19238,7 @@ __RCSID("$NetBSD: var.c,v 1.96 2005/07/01 16:45:38 christos Exp $");
  * XXX: There's a lot of duplication in these functions.
  */
 
-#ifndef NO_REGEX
-#include    <sys/types.h>
-#include    <regex.h>
-#endif
-#include    <ctype.h>
-#include    <stdlib.h>
-#include    <limits.h>
-
-#include    "make.h"
-#include    "buf.h"
+/* <<var.c includes>> */
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -19084,17 +19339,6 @@ typedef struct {
     int		err;		/* err for not defined */
 } VarLoop_t;
 
-#ifndef NO_REGEX
-/* struct passed as ClientData to VarRESubstitute() for ":C///" */
-typedef struct {
-    regex_t	   re;
-    int		   nsub;
-    regmatch_t 	  *matches;
-    char 	  *replace;
-    int		   flags;
-} VarREPattern;
-#endif
-
 /* struct passed to VarSelectWords() for ":[start..end]" */
 typedef struct {
     int		start;		/* first word to select */
@@ -19119,11 +19363,6 @@ static Boolean VarSYSVMatch(GNode *, Var_Parse_State *,
 #endif
 static Boolean VarNoMatch(GNode *, Var_Parse_State *,
 			char *, Boolean, Buffer, ClientData);
-#ifndef NO_REGEX
-static void VarREError(int, regex_t *, const char *);
-static Boolean VarRESubstitute(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer, ClientData);
-#endif
 static Boolean VarSubstitute(GNode *, Var_Parse_State *,
 			char *, Boolean, Buffer, ClientData);
 static Boolean VarLoopExpand(GNode *, Var_Parse_State *,
@@ -20024,166 +20263,6 @@ VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
     Buf_AddBytes(buf, wordLen, (Byte *)word);
     return(TRUE);
 }
-
-#ifndef NO_REGEX
-/*-
- *-----------------------------------------------------------------------
- * VarREError --
- *	Print the error caused by a regcomp or regexec call.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	An error gets printed.
- *
- *-----------------------------------------------------------------------
- */
-static void
-VarREError(int err, regex_t *pat, const char *str)
-{
-    char *errbuf;
-    int errlen;
-
-    errlen = regerror(err, pat, 0, 0);
-    errbuf = emalloc(errlen);
-    regerror(err, pat, errbuf, errlen);
-    Error("%s: %s", str, errbuf);
-    free(errbuf);
-}
-
-
-/*-
- *-----------------------------------------------------------------------
- * VarRESubstitute --
- *	Perform a regex substitution on the given word, placing the
- *	result in the passed buffer.
- *
- * Results:
- *	TRUE if a space is needed before more characters are added.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-static Boolean
-VarRESubstitute(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
-		char *word, Boolean addSpace, Buffer buf,
-		ClientData patternp)
-{
-    VarREPattern *pat;
-    int xrv;
-    char *wp;
-    char *rp;
-    int added;
-    int flags = 0;
-
-#define MAYBE_ADD_SPACE()		\
-	if (addSpace && !added)		\
-	    Buf_AddByte(buf, ' ');	\
-	added = 1
-
-    added = 0;
-    wp = word;
-    pat = patternp;
-
-    if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
-	(VAR_SUB_ONE|VAR_SUB_MATCHED))
-	xrv = REG_NOMATCH;
-    else {
-    tryagain:
-	xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, flags);
-    }
-
-    switch (xrv) {
-    case 0:
-	pat->flags |= VAR_SUB_MATCHED;
-	if (pat->matches[0].rm_so > 0) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf, pat->matches[0].rm_so, wp);
-	}
-
-	for (rp = pat->replace; *rp; rp++) {
-	    if ((*rp == '\\') && ((rp[1] == '&') || (rp[1] == '\\'))) {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf,rp[1]);
-		rp++;
-	    }
-	    else if ((*rp == '&') ||
-		((*rp == '\\') && isdigit((unsigned char)rp[1]))) {
-		int n;
-		const char *subbuf;
-		int sublen;
-		char errstr[3];
-
-		if (*rp == '&') {
-		    n = 0;
-		    errstr[0] = '&';
-		    errstr[1] = '\0';
-		} else {
-		    n = rp[1] - '0';
-		    errstr[0] = '\\';
-		    errstr[1] = rp[1];
-		    errstr[2] = '\0';
-		    rp++;
-		}
-
-		if (n > pat->nsub) {
-		    Error("No subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
-		} else if ((pat->matches[n].rm_so == -1) &&
-			   (pat->matches[n].rm_eo == -1)) {
-		    Error("No match for subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
-	        } else {
-		    subbuf = wp + pat->matches[n].rm_so;
-		    sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
-		}
-
-		if (sublen > 0) {
-		    MAYBE_ADD_SPACE();
-		    Buf_AddBytes(buf, sublen, subbuf);
-		}
-	    } else {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf, *rp);
-	    }
-	}
-	wp += pat->matches[0].rm_eo;
-	if (pat->flags & VAR_SUB_GLOBAL) {
-	    flags |= REG_NOTBOL;
-	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf, *wp);
-		wp++;
-
-	    }
-	    if (*wp)
-		goto tryagain;
-	}
-	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf, strlen(wp), wp);
-	}
-	break;
-    default:
-	VarREError(xrv, &pat->re, "Unexpected regex error");
-       /* fall through */
-    case REG_NOMATCH:
-	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf,strlen(wp),wp);
-	}
-	break;
-    }
-    return(addSpace||added);
-}
-#endif
-
-
 
 /*-
  *-----------------------------------------------------------------------
@@ -21770,75 +21849,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    }
 		    break;
 		}
-#ifndef NO_REGEX
-		case 'C':
-		{
-		    VarREPattern    pattern;
-		    char           *re;
-		    int             error;
-		    Var_Parse_State tmpparsestate;
-
-		    pattern.flags = 0;
-		    tmpparsestate = parsestate;
-		    delim = tstr[1];
-		    tstr += 2;
-
-		    cp = tstr;
-
-		    if ((re = VarGetPattern(ctxt, &parsestate, err, &cp, delim,
-					    NULL, NULL, NULL)) == NULL)
-			goto cleanup;
-
-		    if ((pattern.replace = VarGetPattern(ctxt, &parsestate,
-							 err, &cp, delim, NULL,
-							 NULL, NULL)) == NULL){
-			free(re);
-			goto cleanup;
-		    }
-
-		    for (;; cp++) {
-			switch (*cp) {
-			case 'g':
-			    pattern.flags |= VAR_SUB_GLOBAL;
-			    continue;
-			case '1':
-			    pattern.flags |= VAR_SUB_ONE;
-			    continue;
-			case 'W':
-			    tmpparsestate.oneBigWord = TRUE;
-			    continue;
-			}
-			break;
-		    }
-
-		    termc = *cp;
-
-		    error = regcomp(&pattern.re, re, REG_EXTENDED);
-		    free(re);
-		    if (error)  {
-			*lengthPtr = cp - start + 1;
-			VarREError(error, &pattern.re, "RE substitution error");
-			free(pattern.replace);
-			return (var_Error);
-		    }
-
-		    pattern.nsub = pattern.re.re_nsub + 1;
-		    if (pattern.nsub < 1)
-			pattern.nsub = 1;
-		    if (pattern.nsub > 10)
-			pattern.nsub = 10;
-		    pattern.matches = emalloc(pattern.nsub *
-					      sizeof(regmatch_t));
-		    newStr = VarModify(ctxt, &tmpparsestate, nstr,
-				       VarRESubstitute,
-				       (ClientData) &pattern);
-		    regfree(&pattern.re);
-		    free(pattern.replace);
-		    free(pattern.matches);
-		    delim = '\0';
-		    break;
-		}
-#endif
 		case 'Q':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarQuote(nstr);
@@ -22480,34 +22490,7 @@ __RCSID("$NetBSD: main.c,v 1.111 2005/06/24 02:53:27 lukem Exp $");
  *				exiting.
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/param.h>
-#include <sys/resource.h>
-#include <sys/signal.h>
-#include <sys/stat.h>
-#ifdef MAKE_NATIVE
-#include <sys/utsname.h>
-#endif
-#include <sys/wait.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#include "make.h"
-#include "hash.h"
-#include "dir.h"
-#include "job.h"
-#include "pathnames.h"
-#include "trace.h"
-
-#ifdef USE_IOVEC
-#include <sys/uio.h>
-#endif
+/* <<main.c includes>> */
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS
@@ -22518,7 +22501,6 @@ time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
-static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
 static Lst		variables;	/* list of variables to print */
@@ -22576,13 +22558,8 @@ MainParseArgs(int argc, char **argv)
 	const char *getopt_def;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
-	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#ifdef REMOTE
-# define OPTFLAGS "BD:I:J:L:NPST:V:WXd:ef:ij:km:nqrst"
-#else
-# define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
-#endif
+#define OPTFLAGS "BC:D:I:J:NPST:V:WXd:ef:ij:knqst"
 #undef optarg
 #define optarg argvalue
 /* Can't actually use getopt(3) because rescanning is not portable */
@@ -22640,6 +22617,14 @@ rearg:
 			compatMake = TRUE;
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
 			break;
+		case 'C':
+			if (chdir(optarg)) {
+				(void)fprintf(stderr, "%s: %s: %s.\n",
+					      progname, optarg,
+					      strerror(errno));
+				usage();
+			}
+			break;
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL, 0);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
@@ -22674,18 +22659,6 @@ rearg:
 			    jobServer = TRUE;
 			}
 			break;
-#ifdef REMOTE
-		case 'L':
-			maxLocal = strtol(optarg, &p, 0);
-			if (*p != '\0' || maxLocal < 1) {
-			    (void) fprintf(stderr, "%s: illegal argument to -L -- must be positive integer!\n",
-				progname);
-			    exit(1);
-			}
-			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
-			break;
-#endif
 		case 'N':
 			noExecute = TRUE;
 			noRecursiveExecute = TRUE;
@@ -22804,29 +22777,13 @@ rearg:
 				    progname);
 				exit(1);
 			}
-#ifndef REMOTE
 			maxLocal = maxJobs;
-#endif
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'k':
 			keepgoing = TRUE;
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
-			break;
-		case 'm':
-			/* look for magic parent directory search string */
-			if (strncmp(".../", optarg, 4) == 0) {
-				if (!Dir_FindHereOrAbove(curdir, optarg+4,
-				    found_path, sizeof(found_path)))
-					break;		/* nothing doing */
-				(void) Dir_AddDir(sysIncPath, found_path);
-
-			} else {
-				(void) Dir_AddDir(sysIncPath, optarg);
-			}
-			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'n':
 			noExecute = TRUE;
@@ -22836,10 +22793,6 @@ rearg:
 			queryFlag = TRUE;
 			/* Kind of nonsensical, wot? */
 			Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
-			break;
-		case 'r':
-			noBuiltins = TRUE;
-			Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
 			break;
 		case 's':
 			beSilent = TRUE;
@@ -22991,14 +22944,8 @@ main(int argc, char **argv)
 	struct stat sb, sa;
 	char *p1, *path, *pwd;
 	char mdpath[MAXPATHLEN];
-    	char *machine = getenv("MACHINE");
-	const char *machine_arch = getenv("MACHINE_ARCH");
-	char *syspath = getenv("MAKESYSPATH");
-	Lst sysMkPath;			/* Path of sys.mk */
-	char *cp = NULL, *start;
+	char *cp = NULL;
 					/* avoid faults on read-only strings */
-	static char defsyspath[] = _PATH_DEFSYSPATH;
-	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 	struct timeval rightnow;		/* to initialize random seed */
 
 	/*
@@ -23061,52 +23008,11 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Get the name of this type of MACHINE from utsname
-	 * so we can share an executable for similar machines.
-	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
-	 *
-	 * Note that both MACHINE and MACHINE_ARCH are decided at
-	 * run-time.
-	 */
-	if (!machine) {
-#ifdef MAKE_NATIVE
-	    struct utsname utsname;
-
-	    if (uname(&utsname) == -1) {
-		(void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
-		    strerror(errno));
-		exit(2);
-	    }
-	    machine = utsname.machine;
-#else
-#ifdef MAKE_MACHINE
-	    machine = MAKE_MACHINE;
-#else
-	    machine = "unknown";
-#endif
-#endif
-	}
-
-	if (!machine_arch) {
-#ifndef MACHINE_ARCH
-#ifdef MAKE_MACHINE_ARCH
-            machine_arch = MAKE_MACHINE_ARCH;
-#else
-	    machine_arch = "unknown";
-#endif
-#else
-	    machine_arch = MACHINE_ARCH;
-#endif
-	}
-
-	/*
 	 * Just in case MAKEOBJDIR wants us to do something tricky.
 	 */
 	Var_Init();		/* Initialize the lists of variables for
 				 * parsing arguments */
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL, 0);
-	Var_Set("MACHINE", machine, VAR_GLOBAL, 0);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL, 0);
 #ifdef MAKE_VERSION
 	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL, 0);
 #endif
@@ -23117,10 +23023,11 @@ main(int argc, char **argv)
 	 * MAKEOBJDIR is set in the environment, try only that value
 	 * and fall back to .CURDIR if it does not exist.
 	 *
-	 * Otherwise, try _PATH_OBJDIR.MACHINE, _PATH_OBJDIR, and
-	 * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
-	 * of these paths exist, just use .CURDIR.
+	 * Otherwise, try _PATH_OBJDIR and finally _PATH_OBJDIRPREFIX`pwd`,
+	 * in that order.  If none of these paths exist, just use .CURDIR.
+	 *
 	 */
+
 	Dir_Init(curdir);
 	(void) Main_SetObjdir(curdir);
 
@@ -23130,8 +23037,7 @@ main(int argc, char **argv)
 	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
 		(void) Main_SetObjdir(path);
 	} else {
-		(void) snprintf(mdpath, MAXPATHLEN, "%s.%s", _PATH_OBJDIR, machine);
-		if (!Main_SetObjdir(mdpath) && !Main_SetObjdir(_PATH_OBJDIR)) {
+		if (!Main_SetObjdir(_PATH_OBJDIR)) {
 			(void) snprintf(mdpath, MAXPATHLEN, "%s%s",
 					_PATH_OBJDIRPREFIX, curdir);
 			(void) Main_SetObjdir(mdpath);
@@ -23149,18 +23055,13 @@ main(int argc, char **argv)
 	keepgoing = FALSE;		/* Stop on error */
 	allPrecious = FALSE;		/* Remove targets when interrupted */
 	queryFlag = FALSE;		/* This is not just a check-run */
-	noBuiltins = FALSE;		/* Read the built-in rules */
 	touchFlag = FALSE;		/* Actually update targets */
 	usePipes = TRUE;		/* Catch child output in pipes */
 	debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
 	maxLocal = DEFMAXLOCAL;		/* Set default local max concurrency */
-#ifdef REMOTE
-	maxJobs = DEFMAXJOBS;		/* Set default max concurrency */
-#else
 	maxJobs = maxLocal;
-#endif
 	compatMake = FALSE;		/* No compat mode */
 
 
@@ -23235,57 +23136,6 @@ main(int argc, char **argv)
 		}
 	} else
 		Var_Set(".TARGETS", "", VAR_GLOBAL, 0);
-
-
-	/*
-	 * If no user-supplied system path was given (through the -m option)
-	 * add the directories from the DEFSYSPATH (more than one may be given
-	 * as dir1:...:dirn) to the system include path.
-	 */
-	if (syspath == NULL || *syspath == '\0')
-		syspath = defsyspath;
-	else
-		syspath = strdup(syspath);
-
-	for (start = syspath; *start != '\0'; start = cp) {
-		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
-			continue;
-		if (*cp == ':') {
-			*cp++ = '\0';
-		}
-		/* look for magic parent directory search string */
-		if (strncmp(".../", start, 4) != 0) {
-			(void) Dir_AddDir(defIncPath, start);
-		} else {
-			if (Dir_FindHereOrAbove(curdir, start+4,
-			    found_path, sizeof(found_path))) {
-				(void) Dir_AddDir(defIncPath, found_path);
-			}
-		}
-	}
-	if (syspath != defsyspath)
-		free(syspath);
-
-	/*
-	 * Read in the built-in rules first, followed by the specified
-	 * makefile, if it was (makefile != (char *) NULL), or the default
-	 * makefile and Makefile, in that order, if it wasn't.
-	 */
-	if (!noBuiltins) {
-		LstNode ln;
-
-		sysMkPath = Lst_Init(FALSE);
-		Dir_Expand(_PATH_DEFSYSMK,
-			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
-			   sysMkPath);
-		if (Lst_IsEmpty(sysMkPath))
-			Fatal("%s: no system rules (%s).", progname,
-			    _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
-		if (ln != NILLNODE)
-			Fatal("%s: cannot open %s.", progname,
-			    (char *)Lst_Datum(ln));
-	}
 
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
@@ -24069,12 +23919,11 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: %s [-BeikNnqrstWX] [-D variable] [-d flags] [-f makefile]\n\
-            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
+"usage: %s [-BeikNnqrstWX] [-C dir] [-D variable] [-d flags] [-f makefile]\n\
+            [-I directory] [-J private] [-j max_jobs] [-T file]\n\
             [-V variable] [variable=value] [target ...]\n", progname);
 	exit(2);
 }
-
 
 int
 PrintAddr(ClientData a, ClientData b)
@@ -24082,8 +23931,6 @@ PrintAddr(ClientData a, ClientData b)
     printf("%lx ", (unsigned long) a);
     return b ? 0 : 0;
 }
-
-
 
 void
 PrintOnError(const char *s)

@@ -45,7 +45,6 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include	  "make.h"
 #include	  "lst.h"
 
 typedef struct ListNode {
@@ -85,6 +84,8 @@ typedef struct	{
 } *List;
 
 #define NilList	  	((List)-1)
+
+void *emalloc(size_t);
 
 /*
  * PAlloc (var, ptype) --
