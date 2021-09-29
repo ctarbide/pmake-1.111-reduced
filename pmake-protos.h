@@ -6,17 +6,6 @@
 #define __attribute__(x)
 #endif
 
-/* arch.c */
-ReturnStatus Arch_ParseArchive(char **, Lst, GNode *);
-void Arch_Touch(GNode *);
-void Arch_TouchLib(GNode *);
-time_t Arch_MTime(GNode *);
-time_t Arch_MemMTime(GNode *);
-void Arch_FindLib(GNode *, Lst);
-Boolean Arch_LibOODate(GNode *);
-void Arch_Init(void);
-void Arch_End(void);
-int Arch_IsLib(GNode *);
 /* buf.c */
 void Buf_OvAddByte(Buffer, int);
 void Buf_AddBytes(Buffer, int, const Byte *);

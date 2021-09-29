@@ -110,6 +110,16 @@ future usage.
  * SUCH DAMAGE.
 @
 
+<<lst RCSID and COPYRIGHT macros>>=
+#ifndef __RCSID
+#define __RCSID(x)
+#endif
+
+#ifndef __COPYRIGHT
+#define __COPYRIGHT(x)
+#endif
+@
+
 <<lst.c>>=
 /* this file was generated from lst.nw, please do not edit
  */
@@ -117,6 +127,8 @@ future usage.
 /* begin lstInt.h */
 <<lstInt.h>>
 /* end lstInt.h */
+
+<<lst RCSID and COPYRIGHT macros>>
 
 /* begin lstAppend.c */
 <<lstAppend.c>>

@@ -114,6 +114,14 @@ void *emalloc(size_t);
 #endif /* _LSTINT_H_ */
 /* end lstInt.h */
 
+#ifndef __RCSID
+#define __RCSID(x)
+#endif
+
+#ifndef __COPYRIGHT
+#define __COPYRIGHT(x)
+#endif
+
 /* begin lstAppend.c */
 /*	$NetBSD: lstAppend.c,v 1.10 2004/05/07 00:04:41 ross Exp $	*/
 

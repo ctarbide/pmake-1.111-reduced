@@ -6,4 +6,5 @@ git status --porcelain | perl -lane'exit(1) if m{^\?\? }}{' || die 1 'error: unk
 git clean -dxf
 rm -fv *.h *.c
 nofake -Rextract.sh *.nw | sh
-exec ./build.sh
+./build.sh
+cp -avf pmake ~/local/bin/pmake

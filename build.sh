@@ -2,17 +2,9 @@
 
 set -eu
 
-MACHINE=`uname -m`
-MACHINE_ARCH=`uname -p`
-
 CC=gcc
 
-CFLAGS="-Wall -O -g"
-CFLAGS="${CFLAGS} "'-DTARGET_MACHINE="'"${MACHINE}"'"'
-CFLAGS="${CFLAGS} "'-DTARGET_MACHINE_ARCH="'"${MACHINE_ARCH}"'"'
-CFLAGS="${CFLAGS} "'-DMAKE_MACHINE="'"${MACHINE}"'"'
-CFLAGS="${CFLAGS} -D__RCSID(_)="
-CFLAGS="${CFLAGS} -D__COPYRIGHT(_)="
+CFLAGS="-Wall -O -g -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement"
 CFLAGS="${CFLAGS} -DHAVE_STRERROR"
 CFLAGS="${CFLAGS} -DHAVE_STRDUP"
 CFLAGS="${CFLAGS} -DMAKE_NATIVE"
