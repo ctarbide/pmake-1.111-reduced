@@ -5,6 +5,6 @@ git diff --quiet || die 1 'error: working tree not in pristine state'
 git status --porcelain | perl -lane'exit(1) if m{^\?\? }}{' || die 1 'error: unknown git files are present'
 git clean -dxf
 rm -fv *.h *.c
-nofake -Rextract.sh *.nw | sh
+nofake -Rextract.sh bootstrap.nw | sh
 ./build.sh
-cp -avf pmake ~/local/bin/pmake
+test -d ~/local/bin && cp -avf pmake ~/local/bin/pmake

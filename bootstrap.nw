@@ -1,9 +1,9 @@
 
-nofake -Rextract.sh *.nw | sh
+nofake -Rextract.sh bootstrap.nw | sh
 
 # or
 
-notangle -Rextract.sh *.nw | sh
+notangle -Rextract.sh bootstrap.nw | sh
 
 <<to extract>>=
 # headers

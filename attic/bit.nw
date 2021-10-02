@@ -1,0 +1,83 @@
+
+unused
+
+<<bit.h includes>>=
+#include "sprite.h"
+@
+
+<<bit.h>>=
+/*	$NetBSD: bit.h,v 1.7 2003/08/07 11:14:47 agc Exp $	*/
+
+/*
+<<copyright pmake 1990>>
+ *
+ *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
+ */
+
+/*
+<<copyright pmake 1989.1>>
+ *
+ *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
+ */
+
+/*
+ * bit.h --
+ *
+ *	Definition of macros for setting and clearing bits in an array
+ *	of integers.
+ *
+ *	It is assumed that "int" is 32 bits wide.
+ */
+
+#ifndef _BIT_H_
+#define _BIT_H_
+
+/* @<<bit.h includes@>> */
+
+#define BIT_NUM_BITS_PER_INT	32
+#define BIT_NUM_BITS_PER_BYTE	8
+
+#define Bit_NumInts(numBits)	\
+	(((numBits)+BIT_NUM_BITS_PER_INT -1)/BIT_NUM_BITS_PER_INT)
+
+#define Bit_NumBytes(numBits)	\
+	(Bit_NumInts(numBits) * sizeof(int))
+
+#define Bit_Alloc(numBits, bitArrayPtr)  	\
+        bitArrayPtr = (int *) emalloc((unsigned)Bit_NumBytes(numBits)); \
+        Bit_Zero((numBits), (bitArrayPtr))
+
+#define Bit_Free(bitArrayPtr)	\
+        free((char *)bitArrayPtr)
+
+#define Bit_Set(numBits, bitArrayPtr) \
+	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] |= \
+				(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
+
+#define Bit_IsSet(numBits, bitArrayPtr) \
+	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] & \
+				(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
+
+#define Bit_Clear(numBits, bitArrayPtr) \
+	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] &= \
+				~(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
+
+#define Bit_IsClear(numBits, bitArrayPtr) \
+	(!(Bit_IsSet((numBits), (bitArrayPtr))))
+
+#define Bit_Copy(numBits, srcArrayPtr, destArrayPtr) \
+	memmove((char *)(destArrayPtr), (char *)(srcArrayPtr), \
+		Bit_NumBytes(numBits))
+
+#define Bit_Zero(numBits, bitArrayPtr) \
+	memset((char *)(bitArrayPtr), 0, Bit_NumBytes(numBits))
+
+extern int	  Bit_FindFirstSet();
+extern int	  Bit_FindFirstClear();
+extern Boolean	  Bit_Intersect();
+extern Boolean 	  Bit_Union();
+extern Boolean 	  Bit_AnySet();
+extern int  	  *Bit_Expand();
+
+#endif /* _BIT_H_ */
+@
